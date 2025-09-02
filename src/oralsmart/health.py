@@ -23,14 +23,15 @@ def health_check(request):
         logger.error(f"Database health check failed: {e}")
         db_status = "unhealthy"
 
-    # Check ML models
+    # Check rule-based risk calculation system
     try:
-        from ml_models.ml_predictor import MLPRiskPredictor
-        predictor = MLPRiskPredictor()
-        model_status = "loaded" if predictor.is_trained or predictor.model else "not_loaded"
+        from assessments.risk_calculator import get_risk_prediction
+        # Test with None values to ensure system works without data
+        test_result = get_risk_prediction(None, None)
+        risk_system_status = "available" if test_result.get('available', False) else "unavailable"
     except Exception as e:
-        logger.error(f"ML model health check failed: {e}")
-        model_status = "error"
+        logger.error(f"Risk calculation system health check failed: {e}")
+        risk_system_status = "error"
 
     # Check static files directory
     static_status = "available" if os.path.exists('/app/staticfiles') else "unavailable"
@@ -43,7 +44,7 @@ def health_check(request):
         "timestamp": "2025-08-27T12:00:00Z",  # You can use timezone.now().isoformat()
         "services": {
             "database": db_status,
-            "ml_models": model_status,
+            "risk_calculator": risk_system_status,
             "static_files": static_status,
             "media_files": media_status
         }

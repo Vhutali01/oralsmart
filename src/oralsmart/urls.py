@@ -69,9 +69,6 @@ urlpatterns = [
     path('clinics/', clinic_list, name='clinics'),
     path('clinics/refer/<int:clinic_id>/', refer_patient, name='refer_patient'),
 
-    #for ML models
-    path('ml/', include('ml_models.urls')),
-
     # Health check endpoint
     path('health/', include('oralsmart.health_urls')),
 

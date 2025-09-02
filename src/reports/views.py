@@ -25,8 +25,8 @@ import logging
 import os
 import io
 
-# Import ML predictor
-from ml_models.ml_predictor import MLPRiskPredictor
+# Import rule-based risk calculator
+from assessments.risk_calculator import get_risk_prediction
 
 logger = logging.getLogger(__name__)
 
@@ -139,42 +139,9 @@ class ProfessionalRecommendationService:
             }
         return None
 
-def get_ml_risk_prediction(dental_data, dietary_data):
-    """Get ML risk prediction for a patient"""
-    try:
-        # Initialize ML predictor
-        predictor = MLPRiskPredictor()
-        
-        # Check if model is trained
-        if not predictor.is_trained:
-            return {
-                'risk_level': 'Unknown',
-                'confidence': 0.0,
-                'probability_low_risk': 0.0,
-                'probability_medium_risk': 0.0,
-                'probability_high_risk': 0.0,
-                'error': 'ML model not trained',
-                'available': False
-            }
-        
-        # Get prediction
-        prediction = predictor.predict_risk(dental_data, dietary_data)
-        prediction['available'] = True
-        prediction['error'] = None
-        
-        return prediction
-        
-    except Exception as e:
-        logger.error(f"ML prediction error: {e}")
-        return {
-            'risk_level': 'Error',
-            'confidence': 0.0,
-            'probability_low_risk': 0.0,
-            'probability_medium_risk': 0.0,
-            'probability_high_risk': 0.0,
-            'error': str(e),
-            'available': False
-        }
+def get_rule_based_risk_prediction(dental_data, dietary_data):
+    """Get rule-based risk prediction for a patient"""
+    return get_risk_prediction(dental_data, dietary_data)
 
 def get_risk_color(risk_level):
     """Get color for risk level"""
@@ -266,7 +233,7 @@ def view_report(request, patient_id):
     except DietaryScreening.DoesNotExist:
         dietary_data = None
 
-    ml_prediction = get_ml_risk_prediction(dental_data=dental_data, dietary_data=dietary_data)
+    ml_prediction = get_rule_based_risk_prediction(dental_data=dental_data, dietary_data=dietary_data)
     risk_color = get_risk_color(ml_prediction['risk_level'])
     
     # Get recommended professionals using the service
@@ -1043,7 +1010,7 @@ def generate_pdf_buffer(patient, include_ai_assessment=True, user=None, recommen
         story.append(Paragraph("AI Risk Assessment", heading_style))
         
         # Get ML prediction
-        ml_prediction = get_ml_risk_prediction(dental_data, dietary_data)
+        ml_prediction = get_rule_based_risk_prediction(dental_data, dietary_data)
         
         if ml_prediction['available']:
             # Create risk level display with color coding

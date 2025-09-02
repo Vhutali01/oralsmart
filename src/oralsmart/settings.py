@@ -51,7 +51,6 @@ INSTALLED_APPS = [
     'assessments',
     'reports',
     'facility',
-    'ml_models',
 
 ]
 
