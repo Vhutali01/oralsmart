@@ -1,0 +1,30 @@
+# Quick Load Testing Commands for OralSmart
+
+# 1. Install dependencies
+pip install -r requirements-loadtest.txt
+
+# 2. Setup test data  
+python loadtesting\setup_test_data.py
+
+# 3. Start Django server
+cd src
+python manage.py runserver
+
+# 4. Run load tests (choose one)
+
+## Quick Test (10 users, 5 minutes)
+locust -f loadtesting\locustfile.py --host=http://localhost:8000 --users=10 --spawn-rate=2 --run-time=5m --html=loadtesting\reports\quick_test.html
+
+## Web UI Mode (interactive)
+locust -f loadtesting\locustfile.py --host=http://localhost:8000
+# Then open: http://localhost:8089
+
+## Stress Test (50 users, 15 minutes)
+locust -f loadtesting\locustfile.py --host=http://localhost:8000 --users=50 --spawn-rate=5 --run-time=15m --html=loadtesting\reports\stress_test.html --csv=loadtesting\reports\stress_stats
+
+# Test users created (password: loadtest123):
+# - loadtest_user_1
+# - loadtest_user_2  
+# - loadtest_user_3
+# - loadtest_user_4
+# - loadtest_user_5
