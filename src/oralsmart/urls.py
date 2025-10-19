@@ -72,6 +72,9 @@ urlpatterns = [
     #for ML models
     path('ml/', include('ml_models.urls')),
 
+    #for health tips
+    path('tips/', include('tips.urls')),
+
     # Health check endpoint
     path('health/', include('oralsmart.health_urls')),
 
