@@ -571,7 +571,7 @@ class AuthenticationLoadUser(HttpUser, DjangoUserMixin):
             self.client.get('/patient_list/')
             
             # Logout
-            self.client.get('/logout_user_user/')
+            self.client.get('/logout_user/')
     
     @task(2)
     def failed_login_attempts(self):
