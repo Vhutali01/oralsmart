@@ -44,7 +44,7 @@ class DjangoUserMixin:
             return csrf_input.get('value')
         return None
     
-    def login_user(self, username='testuser', password='testpass123'):
+    def login_user(self, username='loadtest_user_1', password='loadtest123'):
         """Login to Django with CSRF protection"""
         # Get login page and CSRF token
         response = self.client.get('/login_user/')
@@ -181,14 +181,18 @@ class OralSmartUser(HttpUser, DjangoUserMixin):
         """Test ML risk prediction API - computationally intensive"""
         # This endpoint requires POST with specific data structure
         prediction_data = {
-            'dental_features': {
-                'dmft_score': random.randint(0, 10),
-                'fluoride_use': random.choice([0, 1]),
-                'brushing_frequency': random.randint(1, 3)
+            'dental_data': {
+                'sa_citizen': random.choice(['yes', 'no']),
+                'plaque': random.choice(['yes', 'no']),
+                'fluoride_water': random.choice(['yes', 'no']),
+                'fluoride_toothpaste': random.choice(['yes', 'no']),
+                'cavitated_lesions': random.choice(['yes', 'no']),
+                'teeth_data': {f'tooth_{random.randint(11, 18)}': random.choice(['Healthy', 'Caries', 'Missing', 'Filled'])}
             },
-            'dietary_features': {
-                'sugary_drinks': random.randint(0, 3),
-                'snacking_frequency': random.randint(1, 4)
+            'dietary_data': {
+                'sweet_sugary_foods': random.choice(['yes', 'no']),
+                'cold_drinks_juices': random.choice(['yes', 'no']),
+                'fresh_fruit': random.choice(['yes', 'no'])
             }
         }
         
@@ -244,14 +248,16 @@ class HeavyUser(HttpUser, DjangoUserMixin):
         """Make multiple ML predictions"""
         for _ in range(5):
             prediction_data = {
-                'dental_features': {
-                    'dmft_score': random.randint(0, 10),
-                    'fluoride_use': random.choice([0, 1]),
-                    'brushing_frequency': random.randint(1, 3)
+                'dental_data': {
+                    'sa_citizen': random.choice(['yes', 'no']),
+                    'plaque': random.choice(['yes', 'no']),
+                    'fluoride_water': random.choice(['yes', 'no']),
+                    'cavitated_lesions': random.choice(['yes', 'no']),
+                    'teeth_data': {f'tooth_{random.randint(11, 18)}': random.choice(['Healthy', 'Caries'])}
                 },
-                'dietary_features': {
-                    'sugary_drinks': random.randint(0, 3),
-                    'snacking_frequency': random.randint(1, 4)
+                'dietary_data': {
+                    'sweet_sugary_foods': random.choice(['yes', 'no']),
+                    'cold_drinks_juices': random.choice(['yes', 'no'])
                 }
             }
             
@@ -477,23 +483,23 @@ class MLPredictionUser(HttpUser, DjangoUserMixin):
     def perform_risk_predictions(self):
         """Perform ML risk predictions"""
         prediction_data = {
-            'dental_features': {
-                'dmft_score': random.randint(0, 10),
-                'fluoride_use': random.choice([0, 1]),
-                'brushing_frequency': random.randint(1, 3),
-                'last_visit_months': random.randint(1, 24),
-                'pain_reported': random.choice([0, 1])
+            'dental_data': {
+                'sa_citizen': random.choice(['yes', 'no']),
+                'special_needs': random.choice(['yes', 'no']),
+                'plaque': random.choice(['yes', 'no']),
+                'fluoride_water': random.choice(['yes', 'no']),
+                'fluoride_toothpaste': random.choice(['yes', 'no']),
+                'cavitated_lesions': random.choice(['yes', 'no']),
+                'multiple_restorations': random.choice(['yes', 'no']),
+                'teeth_data': {
+                    f'tooth_{random.randint(11, 18)}': random.choice(['Healthy', 'Caries', 'Missing', 'Filled'])
+                }
             },
-            'dietary_features': {
-                'sugary_drinks': random.randint(0, 3),
-                'snacking_frequency': random.randint(1, 4),
-                'fruit_intake': random.randint(1, 3),
-                'water_consumption': random.choice([0, 1])
-            },
-            'demographic_features': {
-                'age': random.randint(0, 6),
-                'gender': random.choice([0, 1]),
-                'socioeconomic_status': random.randint(1, 5)
+            'dietary_data': {
+                'sweet_sugary_foods': random.choice(['yes', 'no']),
+                'cold_drinks_juices': random.choice(['yes', 'no']),
+                'fresh_fruit': random.choice(['yes', 'no']),
+                'takeaways_processed_foods': random.choice(['yes', 'no'])
             }
         }
         
@@ -524,14 +530,15 @@ class MLPredictionUser(HttpUser, DjangoUserMixin):
         """Perform multiple ML predictions in sequence"""
         for _ in range(3):
             prediction_data = {
-                'dental_features': {
-                    'dmft_score': random.randint(0, 10),
-                    'fluoride_use': random.choice([0, 1]),
-                    'brushing_frequency': random.randint(1, 3)
+                'dental_data': {
+                    'sa_citizen': random.choice(['yes', 'no']),
+                    'plaque': random.choice(['yes', 'no']),
+                    'fluoride_water': random.choice(['yes', 'no']),
+                    'teeth_data': {f'tooth_{random.randint(11, 18)}': random.choice(['Healthy', 'Caries'])}
                 },
-                'dietary_features': {
-                    'sugary_drinks': random.randint(0, 3),
-                    'snacking_frequency': random.randint(1, 4)
+                'dietary_data': {
+                    'sweet_sugary_foods': random.choice(['yes', 'no']),
+                    'cold_drinks_juices': random.choice(['yes', 'no'])
                 }
             }
             
@@ -561,8 +568,8 @@ class AuthenticationLoadUser(HttpUser, DjangoUserMixin):
         """Test repeated login/logout cycles"""
         # Test login
         success = self.login_user(
-            username=f'testuser{random.randint(1, 100)}',
-            password='testpass123'
+            username=f'loadtest_user_{random.randint(1, 5)}',
+            password='loadtest123'
         )
         
         if success:
@@ -570,8 +577,11 @@ class AuthenticationLoadUser(HttpUser, DjangoUserMixin):
             self.client.get('/home/')
             self.client.get('/patient_list/')
             
-            # Logout
-            self.client.get('/logout_user/')
+            # Logout with POST method and CSRF token
+            response = self.client.get('/home/')  # Get CSRF token from any page
+            csrf_token = self.get_csrf_token(response)
+            if csrf_token:
+                self.client.post('/logout_user/', data={'csrfmiddlewaretoken': csrf_token})
     
     @task(2)
     def failed_login_attempts(self):
@@ -593,8 +603,8 @@ class AuthenticationLoadUser(HttpUser, DjangoUserMixin):
     def concurrent_sessions(self):
         """Test concurrent session handling"""
         # Multiple rapid logins
-        for i in range(3):
-            self.login_user(username=f'user{i}', password='testpass123')
+        for i in range(1, 4):
+            self.login_user(username=f'loadtest_user_{i}', password='loadtest123')
             self.client.get('/home/')
 
 
@@ -646,14 +656,15 @@ class MixedHealthcareUser(HttpUser, DjangoUserMixin):
         
         # 3. Generate risk prediction
         prediction_data = {
-            'dental_features': {
-                'dmft_score': random.randint(0, 10),
-                'fluoride_use': random.choice([0, 1]),
-                'brushing_frequency': random.randint(1, 3)
+            'dental_data': {
+                'sa_citizen': random.choice(['yes', 'no']),
+                'plaque': random.choice(['yes', 'no']),
+                'fluoride_water': random.choice(['yes', 'no']),
+                'teeth_data': {f'tooth_{random.randint(11, 18)}': random.choice(['Healthy', 'Caries'])}
             },
-            'dietary_features': {
-                'sugary_drinks': random.randint(0, 3),
-                'snacking_frequency': random.randint(1, 4)
+            'dietary_data': {
+                'sweet_sugary_foods': random.choice(['yes', 'no']),
+                'cold_drinks_juices': random.choice(['yes', 'no'])
             }
         }
         

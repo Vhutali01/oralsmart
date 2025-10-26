@@ -1,10 +1,14 @@
 # Load Testing Reports Directory
 
-This directory contains load testing reports and results from both standard Locust tests and enhanced graphical testing.
+This directory contains load testing reports and results from OralSmart load testing.
 
-## Enhanced Testing Output (NEW)
+**📖 For complete load testing instructions, see:** [`../COMPLETE_LOAD_TESTING_GUIDE.md`](../COMPLETE_LOAD_TESTING_GUIDE.md)
+
+## Enhanced Testing Output 
 
 When using the enhanced load testing script (`enhanced_load_test.py`), test results are organized by timestamp:
+
+**📖 For complete enhanced load testing instructions, see the [Complete Load Testing Guide](../COMPLETE_LOAD_TESTING_GUIDE.md#enhanced-load-testing---detailed-usage)**
 
 ```
 reports/

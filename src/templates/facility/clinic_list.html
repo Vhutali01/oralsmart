@@ -249,6 +249,23 @@
 
 {% block content %}
 
+{% if messages %}
+    {% for message in messages %}
+        <div class="alert alert-{{ message.tags|default:'info' }} alert-dismissible fade show auto-dismiss-alert" role="alert">
+            <strong>{{ message }}</strong>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    {% endfor %}
+{% endif %}
+
+<!-- Debug information (remove in production) -->
+{% if request.user.is_superuser %}
+<div class="alert alert-info">
+    <strong>Debug Info:</strong> Patient ID: {{ patient_id|default:"Not provided" }}, 
+    Selected Sections: {{ selected_sections|join:", "|default:"None" }}
+</div>
+{% endif %}
+
 <!-- Back button -->
 <div class="container mb-3">
     <a href="{{ back_url }}" class="btn btn-outline-primary">
@@ -345,7 +362,13 @@
       <div class="modal-dialog">
         <form method="post" id="bookingForm">
             {% csrf_token %}
-            <input type="hidden" name="patient_id" value="{{ patient_id }}">
+            {% if patient_id %}
+                <input type="hidden" name="patient_id" value="{{ patient_id }}">
+            {% else %}
+                <div class="alert alert-danger">
+                    Error: No patient selected. Please go back and select a patient first.
+                </div>
+            {% endif %}
             <input type="hidden" name="selected_sections" value="{{ selected_sections|join:',' }}">
             <input type="hidden" name="clinic_id" id="modal_clinic_id">
             <div class="modal-content">
@@ -354,18 +377,23 @@
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
               </div>
               <div class="modal-body">
+                {% if not patient_id %}
+                    <div class="alert alert-warning">
+                        <strong>Warning:</strong> No patient ID found. Please return to the patient selection page and try again.
+                    </div>
+                {% endif %}
                 <div id="modalClinicName" class="mb-2"></div>
                 <div class="mb-2">
                     <label for="appointment_date">Date:</label>
-                    <input type="date" name="appointment_date" id="appointment_date" required>
+                    <input type="date" name="appointment_date" id="appointment_date" required {% if not patient_id %}disabled{% endif %}>
                 </div>
                 <div class="mb-2">
                     <label for="appointment_time">Time:</label>
-                    <input type="time" name="appointment_time" id="appointment_time" required>
+                    <input type="time" name="appointment_time" id="appointment_time" required {% if not patient_id %}disabled{% endif %}>
                 </div>
               </div>
               <div class="modal-footer">
-                <button type="submit" class="book-btn">Refer/Book</button>
+                <button type="submit" class="book-btn" {% if not patient_id %}disabled{% endif %}>Refer/Book</button>
               </div>
             </div>
         </form>
@@ -381,6 +409,23 @@
                 bsAlert.close();
             });
         }, 5000);
+
+        // Form validation before submission
+        document.getElementById('bookingForm').addEventListener('submit', function(e) {
+            var patientId = document.querySelector('input[name="patient_id"]');
+            if (!patientId || !patientId.value || patientId.value === 'None' || patientId.value === '') {
+                e.preventDefault();
+                alert('Error: No patient selected. Please go back and select a patient first.');
+                return false;
+            }
+            
+            var clinicId = document.getElementById('modal_clinic_id').value;
+            if (!clinicId) {
+                e.preventDefault();
+                alert('Error: No clinic selected.');
+                return false;
+            }
+        });
 
         // When a clinic card or BOOK button is clicked
         document.querySelectorAll('.clinic-card').forEach(function(card) {

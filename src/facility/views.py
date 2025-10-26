@@ -43,6 +43,16 @@ def clinic_list(request):
         )
     
     patient_id = request.GET.get('patient_id')
+    # Validate patient_id
+    if patient_id:
+        try:
+            patient_id = int(patient_id)
+            # Check if patient exists
+            Patient.objects.get(pk=patient_id)
+        except (ValueError, TypeError, Patient.DoesNotExist):
+            messages.warning(request, "Invalid or missing patient ID. Please select a patient first.")
+            patient_id = None
+    
     selected_sections = request.GET.get('selected_sections', '').split(',') if request.GET.get('selected_sections') else []
     context = {
         'clinics': clinics,
@@ -426,12 +436,39 @@ def refer_patient(request, clinic_id):
     if request.method == 'POST':
         patient_id = request.POST.get('patient_id')
         if not patient_id:
-            return HttpResponse("Missing patient_id", status=400)
-        selected_sections = request.POST['selected_sections'].split(',')
-        appointment_date = request.POST['appointment_date']
-        appointment_time = request.POST['appointment_time']
-        clinic = Clinic.objects.get(pk=clinic_id)
-        patient = Patient.objects.get(pk=patient_id)
+            messages.error(request, "Missing patient_id")
+            return redirect('clinics')
+        
+        try:
+            patient_id = int(patient_id)
+        except (ValueError, TypeError):
+            messages.error(request, "Invalid patient_id")
+            return redirect('clinics')
+            
+        if not clinic_id:
+            messages.error(request, "Missing clinic_id")
+            return redirect('clinics')
+            
+        selected_sections = request.POST.get('selected_sections', '').split(',')
+        appointment_date = request.POST.get('appointment_date')
+        appointment_time = request.POST.get('appointment_time')
+        
+        if not appointment_date or not appointment_time:
+            messages.error(request, "Please provide both appointment date and time")
+            return redirect('clinics')
+        
+        try:
+            clinic = Clinic.objects.get(pk=clinic_id)
+        except Clinic.DoesNotExist:
+            messages.error(request, "Clinic not found")
+            return redirect('clinics')
+            
+        try:
+            patient = Patient.objects.get(pk=patient_id)
+        except Patient.DoesNotExist:
+            messages.error(request, "Patient not found")
+            return redirect('clinics')
+            
         try:
             dental_data = DentalScreening.objects.get(patient_id=patient_id)
         except DentalScreening.DoesNotExist:

@@ -1,15 +1,33 @@
 # 🔥 OralSmart Load Testing Guide
 
-This guide provides comprehensive instructions for load testing the OralSmart Django application using Locust.
+**⚠️ NOTICE: This guide has been superseded by a comprehensive unified guide.**
 
-## 📋 Table of Contents
+## 📖 **Please Use the Complete Guide**
 
-1. [Setup](#setup)
-2. [Test Scenarios](#test-scenarios) 
-3. [Running Tests](#running-tests)
-4. [Interpreting Results](#interpreting-results)
-5. [Performance Targets](#performance-targets)
-6. [Troubleshooting](#troubleshooting)
+**👉 For all load testing needs, use:** [`loadtesting/COMPLETE_LOAD_TESTING_GUIDE.md`](loadtesting/COMPLETE_LOAD_TESTING_GUIDE.md)
+
+**The complete guide includes:**
+- ✅ All test runners (locustfile, virtual_user_load_test, enhanced_load_test)
+- ✅ Clear command examples for every scenario
+- ✅ Professional result interpretation
+- ✅ Troubleshooting for common issues
+- ✅ Healthcare-specific performance thresholds
+- ✅ Step-by-step setup instructions
+
+## 🚀 Quick Start
+```bash
+# 1. Start Django server
+cd src && python manage.py runserver
+
+# 2. Run scaling test (recommended)
+python loadtesting/virtual_user_load_test.py --scenario "Patient Management" --user-range "5,10,15,20,25"
+```
+
+---
+
+**The content below is deprecated and maintained for reference only.**
+
+---
 
 ## 🚀 Setup
 
