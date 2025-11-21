@@ -17,7 +17,7 @@ from django.contrib import admin
 from django.urls import path, include
 from patient.views import create_patient, patient_list_view
 from userauth.views import login_user, logout_user,register_user, home_view, landing
-from userprofile.views import profile_view, get_professions
+from userprofile.views import profile_view, get_professions, edit_name, edit_contact, edit_profession, edit_email, edit_phone, edit_address
 from assessments.views import dental_screening, dietary_screening
 from reports.views import generate_pdf, view_report, send_report_email 
 from userauth.views import activate, change_password, req_password_reset, confirm_password_reset
@@ -47,6 +47,14 @@ urlpatterns = [
     #for profile
     path('profile_view/', profile_view, name='profile'),
     path('ajax/get_professions/', get_professions, name='get_professions'), #gets professions for authority body dynamically
+    
+    # HTMX profile editing endpoints
+    path('profile/edit/name/', edit_name, name='edit_name'),
+    path('profile/edit/contact/', edit_contact, name='edit_contact'),
+    path('profile/edit/profession/', edit_profession, name='edit_profession'),
+    path('profile/edit/email/', edit_email, name='edit_email'),
+    path('profile/edit/phone/', edit_phone, name='edit_phone'),
+    path('profile/edit/address/', edit_address, name='edit_address'),
 
     #for screening assessments
     path('assessments/dietary_screening/<int:patient_id>/', dietary_screening, name='dietary_screening'),

@@ -1,0 +1,18 @@
+<!-- Email Display Partial -->
+<div class="row" id="email-section">
+    <div class="col-sm-3">
+        <p class="mb-0">Email</p>
+    </div>
+    <div class="col-sm-8">
+        <p class="text-muted mb-0">{{ email|default:'No email provided' }}</p>
+    </div>
+    <div class="col-sm-1">
+        <button class="btn btn-link btn-sm p-0" 
+                hx-get="{% url 'edit_email' %}" 
+                hx-target="#email-section" 
+                hx-swap="outerHTML"
+                title="Edit email">
+            <i class="fas fa-edit text-secondary"></i>
+        </button>
+    </div>
+</div>
