@@ -1,9 +1,10 @@
 from django.shortcuts import render, redirect
 from django.contrib.auth.decorators import login_required
 from userprofile.models import Profile
-from .forms import ProfilePictureForm
+from .forms import ProfilePictureForm, UserNameForm, ProfileContactForm, ProfileProfessionForm, ProfileEmailForm, ProfilePhoneForm, ProfileAddressForm
 from django.contrib import messages
 from django.http import JsonResponse
+from django.template.loader import render_to_string
 
 # Create your views here.
 
@@ -65,3 +66,182 @@ def get_professions(request):
             {'value': 'midwife', 'text': 'Midwife'},
         ]
     return JsonResponse({'professions': professions})
+
+# HTMX Views for inline editing
+@login_required
+def edit_name(request):
+    """HTMX view for editing user's name"""
+    user = request.user
+    
+    if request.GET.get('cancel'):
+        # Return display view on cancel
+        context = {
+            'first_name': user.first_name,
+            'last_name': user.last_name,
+        }
+        return render(request, 'userprofile/partials/name_display.html', context)
+    
+    if request.method == 'POST':
+        form = UserNameForm(request.POST, instance=user)
+        if form.is_valid():
+            form.save()
+            # Return the updated display view
+            context = {
+                'first_name': user.first_name,
+                'last_name': user.last_name,
+            }
+            return render(request, 'userprofile/partials/name_display.html', context)
+        else:
+            # Return the form with errors
+            return render(request, 'userprofile/partials/name_form.html', {'form': form})
+    else:
+        # Return the edit form
+        form = UserNameForm(instance=user)
+        return render(request, 'userprofile/partials/name_form.html', {'form': form})
+
+@login_required
+def edit_contact(request):
+    """HTMX view for editing contact information"""
+    profile, _ = Profile.objects.get_or_create(user=request.user)
+    
+    if request.GET.get('cancel'):
+        # Return display view on cancel
+        context = {
+            'phone': profile.tel,
+            'address': profile.address,
+        }
+        return render(request, 'userprofile/partials/contact_display.html', context)
+    
+    if request.method == 'POST':
+        form = ProfileContactForm(request.POST, instance=profile)
+        if form.is_valid():
+            form.save()
+            # Return the updated display view
+            context = {
+                'phone': profile.tel,
+                'address': profile.address,
+            }
+            return render(request, 'userprofile/partials/contact_display.html', context)
+        else:
+            # Return the form with errors
+            return render(request, 'userprofile/partials/contact_form.html', {'form': form})
+    else:
+        # Return the edit form
+        form = ProfileContactForm(instance=profile)
+        return render(request, 'userprofile/partials/contact_form.html', {'form': form})
+
+@login_required
+def edit_profession(request):
+    """HTMX view for editing profession"""
+    profile, _ = Profile.objects.get_or_create(user=request.user)
+    
+    if request.GET.get('cancel'):
+        # Return display view on cancel
+        context = {
+            'profession': profile.get_profession_display(),
+        }
+        return render(request, 'userprofile/partials/profession_display.html', context)
+    
+    if request.method == 'POST':
+        form = ProfileProfessionForm(request.POST, instance=profile)
+        if form.is_valid():
+            form.save()
+            # Return the updated display view
+            context = {
+                'profession': profile.get_profession_display(),
+            }
+            return render(request, 'userprofile/partials/profession_display.html', context)
+        else:
+            # Return the form with errors
+            return render(request, 'userprofile/partials/profession_form.html', {'form': form})
+    else:
+        # Return the edit form
+        form = ProfileProfessionForm(instance=profile)
+        return render(request, 'userprofile/partials/profession_form.html', {'form': form})
+
+@login_required
+def edit_email(request):
+    """HTMX view for editing email"""
+    profile, _ = Profile.objects.get_or_create(user=request.user)
+    
+    if request.GET.get('cancel'):
+        # Return display view on cancel
+        context = {
+            'email': profile.email,
+        }
+        return render(request, 'userprofile/partials/email_display.html', context)
+    
+    if request.method == 'POST':
+        form = ProfileEmailForm(request.POST, instance=profile)
+        if form.is_valid():
+            form.save()
+            # Return the updated display view
+            context = {
+                'email': profile.email,
+            }
+            return render(request, 'userprofile/partials/email_display.html', context)
+        else:
+            # Return the form with errors
+            return render(request, 'userprofile/partials/email_form.html', {'form': form})
+    else:
+        # Return the edit form
+        form = ProfileEmailForm(instance=profile)
+        return render(request, 'userprofile/partials/email_form.html', {'form': form})
+
+@login_required
+def edit_phone(request):
+    """HTMX view for editing phone"""
+    profile, _ = Profile.objects.get_or_create(user=request.user)
+    
+    if request.GET.get('cancel'):
+        # Return display view on cancel
+        context = {
+            'phone': profile.tel,
+        }
+        return render(request, 'userprofile/partials/phone_display.html', context)
+    
+    if request.method == 'POST':
+        form = ProfilePhoneForm(request.POST, instance=profile)
+        if form.is_valid():
+            form.save()
+            # Return the updated display view
+            context = {
+                'phone': profile.tel,
+            }
+            return render(request, 'userprofile/partials/phone_display.html', context)
+        else:
+            # Return the form with errors
+            return render(request, 'userprofile/partials/phone_form.html', {'form': form})
+    else:
+        # Return the edit form
+        form = ProfilePhoneForm(instance=profile)
+        return render(request, 'userprofile/partials/phone_form.html', {'form': form})
+
+@login_required
+def edit_address(request):
+    """HTMX view for editing address"""
+    profile, _ = Profile.objects.get_or_create(user=request.user)
+    
+    if request.GET.get('cancel'):
+        # Return display view on cancel
+        context = {
+            'address': profile.address,
+        }
+        return render(request, 'userprofile/partials/address_display.html', context)
+    
+    if request.method == 'POST':
+        form = ProfileAddressForm(request.POST, instance=profile)
+        if form.is_valid():
+            form.save()
+            # Return the updated display view
+            context = {
+                'address': profile.address,
+            }
+            return render(request, 'userprofile/partials/address_display.html', context)
+        else:
+            # Return the form with errors
+            return render(request, 'userprofile/partials/address_form.html', {'form': form})
+    else:
+        # Return the edit form
+        form = ProfileAddressForm(instance=profile)
+        return render(request, 'userprofile/partials/address_form.html', {'form': form})

@@ -52,9 +52,9 @@
                         <span class="text-white fw-bold">View/Edit</span>
                     </div>
                 </div>
-                <h5 class="my-3">{{ first_name|default:'No first name provided' }} {{ last_name|default:'No last name provided' }}</h5>
-                <p class="text-muted mb-1">{{ profession|default:'No profession provided' }}</p>
-                <p class="text-muted mb-4">{{ address|default:'No address provided' }}</p>
+                <h5 class="my-3" id="left-panel-name">{{ first_name|default:'No first name provided' }} {{ last_name|default:'No last name provided' }}</h5>
+                <p class="text-muted mb-1" id="left-panel-profession">{{ profession|default:'No profession provided' }}</p>
+                <p class="text-muted mb-4" id="left-panel-address">{{ address|default:'No address provided' }}</p>
                 <div class="d-flex justify-content-center mb-2">
                     <form action="{% url 'logout' %}" method="POST"> 
                         {% csrf_token %}
@@ -68,50 +68,24 @@
         <div class="col-lg-8">
             <div class="card mb-4">
             <div class="card-body">
-                <div class="row">
-                <div class="col-sm-3">
-                    <p class="mb-0">Full Name</p>
-                </div>
-                <div class="col-sm-9">
-                    <p class="text-muted mb-0">{{ first_name|default:'No first name provided' }} {{ last_name|default:'No last name provided' }}</p>
-                </div>
-                </div>
+                <!-- Name Section with HTMX -->
+                {% include 'userprofile/partials/name_display.html' with first_name=first_name last_name=last_name %}
                 <hr>
-                <div class="row">
-                <div class="col-sm-3">
-                    <p class="mb-0">Email</p>
-                </div>
-                <div class="col-sm-9">
-                    <p class="text-muted mb-0">{{ email|default:'No email provided' }}</p>
-                </div>
-                </div>
+                
+                <!-- Email Section with HTMX -->
+                {% include 'userprofile/partials/email_display.html' with email=email %}
                 <hr>
-                <div class="row">
-                <div class="col-sm-3">
-                    <p class="mb-0">Phone</p>
-                </div>
-                <div class="col-sm-9">
-                    <p class="text-muted mb-0">{{ phone|default:'No phone number provided' }}</p>
-                </div>
-                </div>
+                
+                <!-- Phone Section with HTMX -->
+                {% include 'userprofile/partials/phone_display.html' with phone=phone %}
                 <hr>
-                <div class="row">
-                <div class="col-sm-3">
-                    <p class="mb-0">Mobile</p>
-                </div>
-                <div class="col-sm-9">
-                    <p class="text-muted mb-0">(098) 765-4321</p>
-                </div>
-                </div>
+                
+                <!-- Address Section with HTMX -->
+                {% include 'userprofile/partials/address_display.html' with address=address %}
                 <hr>
-                <div class="row">
-                <div class="col-sm-3">
-                    <p class="mb-0">Address</p>
-                </div>
-                <div class="col-sm-9">
-                    <p class="text-muted mb-0">{{ address|default:'No address provided' }}</p>
-                </div>
-                </div>
+                
+                <!-- Profession Section with HTMX -->
+                {% include 'userprofile/partials/profession_display.html' %}
             </div>
             </div>
         
@@ -196,6 +170,92 @@
         
         .position-relative:hover .profile-hover-overlay {
             opacity: 1;
+        }
+        
+        /* HTMX loading and transition styles */
+        .htmx-indicator {
+            opacity: 0;
+            transition: opacity 300ms ease-in;
+        }
+        .htmx-request .htmx-indicator {
+            opacity: 1;
+        }
+        .htmx-request.htmx-indicator {
+            opacity: 1;
+        }
+        
+        /* Smooth transitions for form replacements */
+        .htmx-swapping {
+            opacity: 0;
+            transition: opacity 300ms ease-out;
+        }
+        
+        /* Hover effects for edit buttons */
+        .btn-link:hover i {
+            color: #0056b3 !important;
+            transform: scale(1.1);
+            transition: all 0.2s ease;
+        }
+        
+        .btn-link i {
+            transition: all 0.2s ease;
+        }
+        
+        /* Form styling improvements */
+        .input-group .form-control {
+            border-radius: 0.375rem 0 0 0.375rem;
+        }
+        
+        .input-group-append .btn-group {
+            margin-left: -1px;
+        }
+        
+        .input-group-append .btn-group .btn:first-child {
+            border-radius: 0;
+            border-left: 0;
+        }
+        
+        .input-group-append .btn-group .btn:last-child {
+            border-radius: 0 0.375rem 0.375rem 0;
+        }
+        
+        .input-group-append .btn-group .btn {
+            border-left: 0;
+        }
+        
+        .input-group-append .btn-group .btn + .btn {
+            border-left: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        /* Better button styling */
+        .btn-success {
+            background-color: #28a745;
+            border-color: #28a745;
+        }
+        
+        .btn-success:hover {
+            background-color: #218838;
+            border-color: #1e7e34;
+        }
+        
+        .btn-outline-secondary {
+            color: #6c757d;
+            border-color: #6c757d;
+        }
+        
+        .btn-outline-secondary:hover {
+            color: #fff;
+            background-color: #6c757d;
+            border-color: #6c757d;
+        }
+        
+        /* Loading spinner styling */
+        .htmx-indicator {
+            display: none;
+        }
+        
+        .htmx-request .htmx-indicator {
+            display: inline;
         }
     </style>
 

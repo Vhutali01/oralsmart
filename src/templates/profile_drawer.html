@@ -10,7 +10,8 @@
     <div class="offcanvas-body d-flex flex-column">
 
         <div class="flex-grow-1">
-            <div class="text-center mb-3">
+
+            <div class="text-center mb-4">
                 <a href="{% url 'profile' %}" class="d-inline-block">
                     <div class="position-relative" style="cursor: pointer;" data-bs-toggle="modal" data-bs-target="#profilePictureModal">
                         <img src="{{ request.user.profile.profile_picture_url }}" 
@@ -21,24 +22,25 @@
                 </a>
             </div>
 
-            <div class="text-center">
+            <div class="text-center mb-4">
 
                 <h5 class="my-3">{{ request.user.first_name|default:'No first name' }} {{ request.user.last_name|default:'No last name' }}</h5>
                 <p class="text-muted">{{ request.user.email|default:'No email provided' }}</p>
 
             </div>
             
-            <div class="text-center">
+            <div class="text-center mb-4">
 
-                <a href="{% url 'profile' %}">View Profile</a>
+                    <a href="{% url 'profile' %}" class="btn btn-outline-primary ms-1" data-mdb-button-init data-mdb-ripple-init>View Profile</a>
+
+            </div>
+
+            <div class="text-center mb-4">
+
+                <a href="{% url 'home' %}" class="btn btn-outline-primary ms-1" data-mdb-button-init data-mdb-ripple-init>Change Password</a>
 
             </div>
 
-            <div class="text-center">
-
-                <a href="{% url 'home' %}">Go to Home page</a>
-
-            </div>
         </div>
 
         <!-- Logout button at the bottom -->
