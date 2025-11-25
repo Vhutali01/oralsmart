@@ -1,0 +1,163 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Referrals - OralSmart{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>Referral Management</h2>
+        <a href="{% url 'referrals:create' %}" class="btn btn-primary">
+            <i class="fas fa-plus"></i> Create New Referral
+        </a>
+    </div>
+
+    <!-- Statistics Cards -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card text-white bg-primary">
+                <div class="card-body">
+                    <h5 class="card-title">Sent</h5>
+                    <h2>{{ sent_referrals.count }}</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-white bg-success">
+                <div class="card-body">
+                    <h5 class="card-title">Received</h5>
+                    <h2>{{ received_referrals.count }}</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-white bg-warning">
+                <div class="card-body">
+                    <h5 class="card-title">Pending</h5>
+                    <h2>{{ pending_count }}</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-white bg-info">
+                <div class="card-body">
+                    <h5 class="card-title">Completed</h5>
+                    <h2>{{ completed_count }}</h2>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tabs -->
+    <ul class="nav nav-tabs mb-3" role="tablist">
+        <li class="nav-item">
+            <a class="nav-link active" data-bs-toggle="tab" href="#sent">Sent Referrals</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" data-bs-toggle="tab" href="#received">Received Referrals</a>
+        </li>
+    </ul>
+
+    <div class="tab-content">
+        <!-- Sent Referrals Tab -->
+        <div id="sent" class="tab-pane fade show active">
+            <div class="card">
+                <div class="card-body">
+                    {% if sent_referrals %}
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Referral #</th>
+                                        <th>Patient</th>
+                                        <th>Referred To</th>
+                                        <th>Urgency</th>
+                                        <th>Status</th>
+                                        <th>Created</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for referral in sent_referrals %}
+                                    <tr>
+                                        <td>{{ referral.referral_number }}</td>
+                                        <td>{{ referral.patient.name }} {{ referral.patient.surname }}</td>
+                                        <td>{{ referral.receiving_facility.name }}</td>
+                                        <td>
+                                            <span class="badge bg-{% if referral.urgency == 'emergency' %}danger{% elif referral.urgency == 'urgent' %}warning{% else %}secondary{% endif %}">
+                                                {{ referral.get_urgency_display }}
+                                            </span>
+                                        </td>
+                                        <td>
+                                            <span class="badge bg-{% if referral.status == 'completed' %}success{% elif referral.status == 'cancelled' %}danger{% elif referral.status == 'acknowledged' %}info{% else %}warning{% endif %}">
+                                                {{ referral.get_status_display }}
+                                            </span>
+                                        </td>
+                                        <td>{{ referral.created_at|date:"M d, Y" }}</td>
+                                        <td>
+                                            <a href="{% url 'referrals:detail' referral.pk %}" class="btn btn-sm btn-outline-primary">View</a>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <p class="text-muted">No sent referrals yet.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Received Referrals Tab -->
+        <div id="received" class="tab-pane fade">
+            <div class="card">
+                <div class="card-body">
+                    {% if received_referrals %}
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Referral #</th>
+                                        <th>Patient</th>
+                                        <th>From</th>
+                                        <th>Urgency</th>
+                                        <th>Status</th>
+                                        <th>Received</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for referral in received_referrals %}
+                                    <tr>
+                                        <td>{{ referral.referral_number }}</td>
+                                        <td>{{ referral.patient.name }} {{ referral.patient.surname }}</td>
+                                        <td>{{ referral.referring_facility.name }}</td>
+                                        <td>
+                                            <span class="badge bg-{% if referral.urgency == 'emergency' %}danger{% elif referral.urgency == 'urgent' %}warning{% else %}secondary{% endif %}">
+                                                {{ referral.get_urgency_display }}
+                                            </span>
+                                        </td>
+                                        <td>
+                                            <span class="badge bg-{% if referral.status == 'completed' %}success{% elif referral.status == 'cancelled' %}danger{% elif referral.status == 'acknowledged' %}info{% else %}warning{% endif %}">
+                                                {{ referral.get_status_display }}
+                                            </span>
+                                        </td>
+                                        <td>{{ referral.sent_at|date:"M d, Y" }}</td>
+                                        <td>
+                                            <a href="{% url 'referrals:detail' referral.pk %}" class="btn btn-sm btn-outline-primary">View</a>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <p class="text-muted">No received referrals yet.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
