@@ -77,6 +77,9 @@ urlpatterns = [
     path('clinics/', clinic_list, name='clinics'),
     path('clinics/refer/<int:clinic_id>/', refer_patient, name='refer_patient'),
 
+    #for referrals
+    path('referrals/', include('referrals.urls')),
+
     #for ML models
     path('ml/', include('ml_models.urls')),
 

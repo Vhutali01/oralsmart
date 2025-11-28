@@ -18,34 +18,43 @@ def referral_list(request):
     """
     user = request.user
     
-    # Get facilities associated with user
-    user_facilities = user.clinics.all()
-    
     # Referrals sent by this user
     sent_referrals = Referral.objects.filter(referring_user=user).select_related(
         'patient', 'receiving_facility', 'referring_facility'
     )
     
-    # Referrals received (either user is recipient or facility is recipient)
+    # Referrals received by this user directly
     received_referrals = Referral.objects.filter(
-        Q(receiving_user=user) | Q(receiving_facility__in=user_facilities)
+        receiving_user=user
     ).select_related('patient', 'referring_user', 'referring_facility')
+    
+    # Split received referrals into incoming (need attention) and history (already handled)
+    incoming_referrals = received_referrals.filter(status='sent').order_by('-created_at')
+    history_referrals = received_referrals.exclude(status='sent').order_by('-updated_at')
     
     # Filter by status if provided
     status_filter = request.GET.get('status')
     if status_filter:
         sent_referrals = sent_referrals.filter(status=status_filter)
-        received_referrals = received_referrals.filter(status=status_filter)
+        if status_filter == 'sent':
+            incoming_referrals = incoming_referrals.filter(status=status_filter)
+        else:
+            history_referrals = history_referrals.filter(status=status_filter)
     
     # Calculate counts for dashboard
-    pending_count = received_referrals.filter(status='sent').count()
+    incoming_count = incoming_referrals.count()
+    history_count = history_referrals.count()
+    sent_count = sent_referrals.count()
     completed_count = sent_referrals.filter(status='completed').count()
     
     context = {
         'sent_referrals': sent_referrals[:10],  # Latest 10
-        'received_referrals': received_referrals[:10],  # Latest 10
+        'incoming_referrals': incoming_referrals[:10],  # Latest 10 incoming
+        'history_referrals': history_referrals[:10],  # Latest 10 history
         'status_filter': status_filter,
-        'pending_count': pending_count,
+        'incoming_count': incoming_count,
+        'history_count': history_count,
+        'sent_count': sent_count,
         'completed_count': completed_count,
     }
     
@@ -64,13 +73,8 @@ def referral_create(request):
             referral = form.save(commit=False)
             referral.referring_user = request.user
             
-            # Get user's primary facility (you might need to adjust this logic)
-            user_facilities = request.user.clinics.all()
-            if user_facilities.exists():
-                referral.referring_facility = user_facilities.first()
-            else:
-                messages.error(request, 'You must be associated with a facility to send referrals.')
-                return render(request, 'referrals/referral_form.html', {'form': form})
+            # Set referring_facility to None for now (can be enhanced later)
+            referral.referring_facility = None
             
             referral.save()
             
@@ -105,13 +109,9 @@ def referral_detail(request, pk):
     
     # Check permissions
     user = request.user
-    user_facilities = user.clinics.all()
     
     is_sender = referral.referring_user == user
-    is_receiver = (
-        referral.receiving_user == user or 
-        referral.receiving_facility in user_facilities
-    )
+    is_receiver = referral.receiving_user == user
     
     if not (is_sender or is_receiver):
         return HttpResponseForbidden("You don't have permission to view this referral.")

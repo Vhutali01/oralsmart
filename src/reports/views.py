@@ -256,6 +256,8 @@ class CustomPageTemplate:
 @login_required
 def view_report(request, patient_id):
 
+    patient = Patient.objects.get(id=patient_id)
+
     try:
         dental_data = DentalScreening.objects.get(patient_id=patient_id)
     except DentalScreening.DoesNotExist:
@@ -285,6 +287,9 @@ def view_report(request, patient_id):
         "reports/report.html", 
         {
             "patient_id": patient_id,
+            "patient": patient,
+            "dental_screening": dental_data,
+            "dietary_screening": dietary_data,
             'show_navbar': True,
             'risk_prediction': ml_prediction,
             'risk_color': risk_color,

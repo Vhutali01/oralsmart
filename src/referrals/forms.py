@@ -78,8 +78,8 @@ class ReferralForm(forms.ModelForm):
         if user:
             self.fields['patient'].queryset = Patient.objects.filter(created_by=user)
         
-        # Filter clinics that accept referrals
-        self.fields['receiving_facility'].queryset = Clinic.objects.filter(accepts_referrals=True)
+        # Show all clinics for now
+        self.fields['receiving_facility'].queryset = Clinic.objects.all()
         
         # Make some fields optional
         self.fields['dental_screening'].required = False

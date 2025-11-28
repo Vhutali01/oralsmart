@@ -66,6 +66,10 @@ def create_patient(request):
 @login_required
 def patient_list_view(request):
     """View to display all patients created by the current user with search functionality"""
+    from referrals.models import Referral
+    
+    user = request.user
+    
     # Get search query from GET parameters
     search_query = request.GET.get('search', '').strip()
     
@@ -91,6 +95,16 @@ def patient_list_view(request):
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
     
+    # Referrals sent by this user
+    sent_referrals = Referral.objects.filter(referring_user=user).select_related(
+        'patient', 'receiving_facility', 'referring_facility'
+    ).order_by('-created_at')
+    
+    # Referrals received by this user directly
+    received_referrals = Referral.objects.filter(
+        receiving_user=user
+    ).select_related('patient', 'referring_user', 'referring_facility').order_by('-created_at')
+    
     context = {
         'patients': page_obj,
         'page_obj': page_obj,
@@ -98,6 +112,9 @@ def patient_list_view(request):
         'search_query': search_query,
         'show_navbar': True,
         'total_patients': paginator.count,
+        'sent_referrals': sent_referrals[:10],
+        'received_referrals': received_referrals[:10],
+        'back_url': '/home/',
     }
     
     return render(request, "patient/patient_list.html", context)
