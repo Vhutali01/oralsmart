@@ -101,27 +101,49 @@
         </div>
     </div>
 
-    <!-- Recommended Professional -->
+    <!-- Recommended Professional and Referral Details -->
     <div class="card mb-3">
         <div class="card-header bg-primary text-white">
-            <h5 class="mb-0">Recommended Professional for Referral</h5>
+            <h5 class="mb-0">Referral Details</h5>
         </div>
         <div class="card-body">
-            <p class="text-muted mb-3">Please select the type of health professional you recommend for this patient:</p>
-            
             <div class="mb-3">
-                <label for="recommended_professional" class="form-label">Select Professional</label>
-                <select class="form-select form-select-lg" id="recommended_professional" name="recommended_professional" required>
+                <label for="recommended_professional" class="form-label">Recommended Professional <span class="text-danger">*</span></label>
+                <select class="form-select" id="recommended_professional" name="recommended_professional" required>
                     <option value="" disabled {% if not current_recommendation_code %}selected{% endif %}>Choose a professional...</option>
                     {% for prof_code, prof_name in recommended_professionals %}
                         <option value="{{ prof_code }}" {% if current_recommendation_code == prof_code %}selected{% endif %}>{{ prof_name }}</option>
                     {% endfor %}
                 </select>
-                <small class="form-text text-muted">This recommendation will be included in the report and email</small>
+                <small class="form-text text-muted">Select the type of health professional you recommend for this patient</small>
+            </div>
+            
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label for="urgency" class="form-label">Urgency Level <span class="text-danger">*</span></label>
+                    <select class="form-select" id="urgency" name="urgency" required>
+                        <option value="" disabled selected>Select urgency level...</option>
+                        <option value="routine">Routine</option>
+                        <option value="urgent">Urgent</option>
+                        <option value="emergency">Emergency</option>
+                    </select>
+                </div>
+            </div>
+            
+            <div class="mb-3">
+                <label for="reason" class="form-label">Reason for Referral <span class="text-danger">*</span></label>
+                <textarea id="reason" name="reason" rows="3" class="form-control" required 
+                          placeholder="Describe the primary reason for this referral..."></textarea>
+            </div>
+            
+            <div class="mb-3">
+                <label for="clinical_summary" class="form-label">Clinical Summary <span class="text-danger">*</span></label>
+                <textarea id="clinical_summary" name="clinical_summary" rows="4" class="form-control" required 
+                          placeholder="Provide relevant clinical findings, history, and recommendations..."></textarea>
             </div>
             
             <div id="recommendation-error" class="text-center mt-2" style="display: none;">
-                <small class="text-danger">Please select a professional recommendation before proceeding.</small>
+                <small class="text-danger">Please complete all required fields before proceeding.</small>
             </div>
         </div>
     </div>
@@ -238,6 +260,7 @@
     <button id="proceed-btn" class="btn btn-primary" type="button" onclick="validateAndProceed()">Proceed to Booking</button>
 </div>
 
+
 <script>
     document.addEventListener('DOMContentLoaded', function() {
         setTimeout(function() {
@@ -342,18 +365,77 @@
     // Validation function for proceed button
     function validateAndProceed() {
         const selectElement = document.querySelector('select[name="recommended_professional"]');
-        const errorDiv = document.getElementById('recommendation-error');
+        const urgencyElement = document.querySelector('select[name="urgency"]');
+        const reasonElement = document.querySelector('textarea[name="reason"]');
+        const clinicalSummaryElement = document.querySelector('textarea[name="clinical_summary"]');
         
-        if (!selectElement || !selectElement.value) {
-            errorDiv.style.display = 'block';
-            // Scroll to the recommendation section
-            document.querySelector('.form-section').scrollIntoView({ behavior: 'smooth' });
+        // Check if all required fields are filled
+        const missingFields = [];
+        if (!selectElement || !selectElement.value) missingFields.push('Recommended Professional');
+        if (!urgencyElement || !urgencyElement.value) missingFields.push('Urgency Level');
+        if (!reasonElement || !reasonElement.value.trim()) missingFields.push('Reason for Referral');
+        if (!clinicalSummaryElement || !clinicalSummaryElement.value.trim()) missingFields.push('Clinical Summary');
+        
+        if (missingFields.length > 0) {
+            // Create and show Bootstrap alert
+            const alertDiv = document.createElement('div');
+            alertDiv.className = 'alert alert-warning alert-dismissible fade show position-fixed top-0 start-50 translate-middle-x mt-3';
+            alertDiv.style.zIndex = '9999';
+            alertDiv.style.minWidth = '400px';
+            alertDiv.innerHTML = `
+                <strong><i class="fas fa-exclamation-triangle"></i> Required Fields Missing</strong>
+                <p class="mb-1">Please complete the following fields:</p>
+                <ul class="mb-0 ps-3">
+                    ${missingFields.map(field => `<li>${field}</li>`).join('')}
+                </ul>
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            `;
+            document.body.appendChild(alertDiv);
+            
+            // Auto-dismiss after 7 seconds
+            setTimeout(function() {
+                const bsAlert = bootstrap.Alert.getOrCreateInstance(alertDiv);
+                bsAlert.close();
+            }, 7000);
+            
+            // Scroll to the referral details section
+            const referralDetailsCard = document.querySelector('select[name="recommended_professional"]').closest('.card');
+            if (referralDetailsCard) {
+                referralDetailsCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
             return false;
         }
         
-        errorDiv.style.display = 'none';
-        // Proceed to clinics page
-        window.location.href = "{% url 'clinics' %}?patient_id={{ patient_id }}";
+        // Collect all referral details
+        const formData = new FormData();
+        formData.append('patient_id', '{{ patient_id }}');
+        formData.append('recommended_professional', selectElement.value);
+        formData.append('urgency', urgencyElement.value);
+        formData.append('reason', reasonElement.value.trim());
+        formData.append('clinical_summary', clinicalSummaryElement.value.trim());
+        formData.append('patient_preferences', document.getElementById('patient_preferences')?.value || '');
+        formData.append('insurance_information', document.getElementById('insurance_information')?.value || '');
+        formData.append('appointment_date', document.getElementById('appointment_date')?.value || '');
+        formData.append('csrfmiddlewaretoken', document.querySelector('[name=csrfmiddlewaretoken]').value);
+        
+        // Save referral details to session/database
+        fetch("{% url 'save_referral_details' patient_id=patient_id %}", {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Proceed to clinics page
+                window.location.href = "{% url 'clinics' %}?patient_id={{ patient_id }}";
+            } else {
+                alert('Error saving referral details: ' + (data.error || 'Unknown error'));
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('An error occurred while saving referral details');
+        });
     }
 </script>
 

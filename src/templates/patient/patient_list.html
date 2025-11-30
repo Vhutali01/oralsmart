@@ -22,9 +22,9 @@
                         <a href="{% url 'create_patient' %}" class="btn btn-light btn-sm me-2">
                             <i class="fas fa-plus"></i> Add Patient
                         </a>
-                        <a href="{% url 'referrals:create' %}" class="btn btn-light btn-sm">
+                        <button type="button" class="btn btn-light btn-sm" data-bs-toggle="modal" data-bs-target="#selectPatientModal">
                             <i class="fas fa-plus"></i> Create Referral
-                        </a>
+                        </button>
                     </div>
                 </div>
                 <div class="card-body">
@@ -109,7 +109,7 @@
                                         <td>{{ patient.id }}</td>
                                         <td>{{ patient.name }} {{ patient.surname }}</td>
                                         <td>{{ patient.age }}</td>
-                                        <td>{{ patient.gender }}</td>
+                                        <td>{{ patient.get_gender_display }}</td>
                                         <td>{{ patient.parent_contact }}</td>
                                         <td>
                                             {% if patient.created_at %}
@@ -120,15 +120,25 @@
                                         </td>
                                         <td>
                                             <div class="btn-group btn-group-sm" role="group">
-                                                <a href="{% url 'dietary_screening' patient.id %}" class="btn btn-outline-success" title="Dietary Screening">
+                                                <a href="{% url 'dietary_screening' patient.id %}" 
+                                                   class="btn {% if patient.has_dietary_screening %}btn-outline-success{% else %}btn-success{% endif %}" 
+                                                   title="{% if patient.has_dietary_screening %}Update Dietary Screening{% else %}Complete Dietary Screening{% endif %}">
                                                     <i class="fas fa-utensils"></i>
                                                 </a>
-                                                <a href="{% url 'dental_screening' patient.id %}" class="btn btn-outline-info" title="Dental Screening">
+                                                <a href="{% url 'dental_screening' patient.id %}" 
+                                                   class="btn {% if patient.has_dental_screening %}btn-outline-info{% else %}btn-info{% endif %}" 
+                                                   title="{% if patient.has_dental_screening %}Update Dental Screening{% else %}Complete Dental Screening{% endif %}">
                                                     <i class="fas fa-tooth"></i>
                                                 </a>
-                                                <a href="{% url 'report' patient.id %}" class="btn btn-outline-primary" title="View Report">
-                                                    <i class="fas fa-file-alt"></i>
-                                                </a>
+                                                {% if patient.has_dental_screening or patient.has_dietary_screening %}
+                                                    <a href="{% url 'report' patient.id %}" class="btn btn-outline-primary" title="View Report">
+                                                        <i class="fas fa-file-alt"></i>
+                                                    </a>
+                                                {% else %}
+                                                    <button class="btn btn-outline-secondary" disabled title="Complete at least one screening first">
+                                                        <i class="fas fa-lock"></i>
+                                                    </button>
+                                                {% endif %}
                                             </div>
                                         </td>
                                     </tr>
@@ -329,9 +339,9 @@
                                     <i class="fas fa-paper-plane fa-3x text-muted mb-3"></i>
                                     <h5>No sent referrals</h5>
                                     <p class="text-muted">You haven't sent any referrals yet. Start by creating your first referral.</p>
-                                    <a href="{% url 'referrals:create' %}" class="btn btn-primary">
+                                    <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#selectPatientModal">
                                         <i class="fas fa-plus"></i> Create Referral
-                                    </a>
+                                    </button>
                                 </div>
                             {% endif %}
                         </div>
@@ -436,7 +446,200 @@ document.addEventListener('DOMContentLoaded', function() {
             tabTrigger.show();
         });
     });
+    
+    // Modal patient search functionality with debouncing for performance
+    const modalSearchInput = document.getElementById('modalSearchInput');
+    const modalSearchButton = document.getElementById('modalSearchButton');
+    const modalClearButton = document.getElementById('modalClearButton');
+    const patientTableBody = document.getElementById('modalPatientTableBody');
+    const noResultsMessage = document.getElementById('noResultsMessage');
+    const modalPatientCount = document.getElementById('modalPatientCount');
+    const emptyState = document.getElementById('emptyState');
+    
+    if (modalSearchInput && patientTableBody) {
+        let searchTimeout;
+        
+        // Search functionality with debounce
+        function filterPatients() {
+            const searchTerm = modalSearchInput.value.toLowerCase().trim();
+            const rows = patientTableBody.querySelectorAll('tr[data-patient-id]');
+            let visibleCount = 0;
+            
+            // Use DocumentFragment for better performance
+            rows.forEach(row => {
+                const patientName = row.getAttribute('data-patient-name').toLowerCase();
+                const patientId = row.getAttribute('data-patient-id');
+                
+                if (searchTerm === '' || 
+                    patientName.includes(searchTerm) || 
+                    patientId.includes(searchTerm)) {
+                    row.style.display = '';
+                    visibleCount++;
+                } else {
+                    row.style.display = 'none';
+                }
+            });
+            
+            // Update count
+            if (modalPatientCount) {
+                modalPatientCount.textContent = visibleCount;
+            }
+            
+            // Show/hide no results message
+            if (noResultsMessage) {
+                const hasEmptyState = emptyState && rows.length === 0;
+                noResultsMessage.style.display = (visibleCount === 0 && !hasEmptyState) ? 'block' : 'none';
+            }
+            
+            // Show/hide clear button
+            if (modalClearButton) {
+                modalClearButton.style.display = searchTerm === '' ? 'none' : 'inline-block';
+            }
+        }
+        
+        // Debounced search on input
+        modalSearchInput.addEventListener('input', function() {
+            clearTimeout(searchTimeout);
+            searchTimeout = setTimeout(filterPatients, 200);
+        });
+        
+        // Immediate search on button click
+        if (modalSearchButton) {
+            modalSearchButton.addEventListener('click', function() {
+                clearTimeout(searchTimeout);
+                filterPatients();
+            });
+        }
+        
+        // Clear search
+        if (modalClearButton) {
+            modalClearButton.addEventListener('click', function() {
+                modalSearchInput.value = '';
+                clearTimeout(searchTimeout);
+                filterPatients();
+                modalSearchInput.focus();
+            });
+        }
+        
+        // Search on Enter key
+        modalSearchInput.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                clearTimeout(searchTimeout);
+                filterPatients();
+            }
+        });
+    }
 });
 </script>
+
+<!-- Patient Selection Modal -->
+<div class="modal fade" id="selectPatientModal" tabindex="-1" aria-labelledby="selectPatientModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title" id="selectPatientModalLabel">
+                    <i class="fas fa-user-check"></i> Select Patient for Referral
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <!-- Search Bar -->
+                <div class="mb-3">
+                    <div class="input-group">
+                        <span class="input-group-text"><i class="fas fa-search"></i></span>
+                        <input type="text" class="form-control" id="modalSearchInput" placeholder="Search by name, ID, or contact...">
+                        <button class="btn btn-outline-secondary" type="button" id="modalClearButton" style="display: none;">
+                            <i class="fas fa-times"></i>
+                        </button>
+                        <button class="btn btn-primary" type="button" id="modalSearchButton">
+                            <i class="fas fa-search"></i>
+                        </button>
+                    </div>
+                    <small class="form-text text-muted">Patients without completed screenings cannot be referred</small>
+                </div>
+                
+                <!-- Patient Count Info -->
+                <div class="mb-2 text-muted small">
+                    <span id="modalPatientCount">{{ eligible_patients|length }}</span> patient(s) available
+                    {% if eligible_patients|length >= 50 %}
+                        <span class="text-info">(showing most recent 50, use search to find more)</span>
+                    {% endif %}
+                </div>
+                
+                <!-- Patient List -->
+                <div class="table-responsive" style="max-height: 400px; overflow-y: auto;">
+                    <table class="table table-hover table-sm">
+                        <thead class="sticky-top bg-light">
+                            <tr>
+                                <th>ID</th>
+                                <th>Name</th>
+                                <th>Age</th>
+                                <th>Screenings</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="modalPatientTableBody">
+                            {% for patient in eligible_patients %}
+                            <tr data-patient-id="{{ patient.id }}" data-patient-name="{{ patient.name }} {{ patient.surname }}">
+                                <td>{{ patient.id }}</td>
+                                <td>{{ patient.name }} {{ patient.surname }}</td>
+                                <td>{{ patient.age }}</td>
+                                <td>
+                                    {% if patient.has_dental_screening %}
+                                        <span class="badge bg-info text-white me-1" title="Dental screening completed">
+                                            <i class="fas fa-tooth"></i> Dental
+                                        </span>
+                                    {% else %}
+                                        <span class="badge bg-secondary text-white me-1" title="Dental screening not completed">
+                                            <i class="fas fa-tooth"></i> <s>Dental</s>
+                                        </span>
+                                    {% endif %}
+                                    {% if patient.has_dietary_screening %}
+                                        <span class="badge bg-success" title="Dietary screening completed">
+                                            <i class="fas fa-utensils"></i> Dietary
+                                        </span>
+                                    {% else %}
+                                        <span class="badge bg-secondary text-white" title="Dietary screening not completed">
+                                            <i class="fas fa-utensils"></i> <s>Dietary</s>
+                                        </span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if patient.has_dental_screening or patient.has_dietary_screening %}
+                                        <a href="{% url 'report' patient.id %}" class="btn btn-primary btn-sm">
+                                            Continue <i class="fas fa-arrow-right"></i>
+                                        </a>
+                                    {% else %}
+                                        <button class="btn btn-secondary btn-sm" disabled title="Complete at least one screening first">
+                                            <i class="fas fa-lock"></i> No Screenings
+                                        </button>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr id="emptyState">
+                                <td colspan="5" class="text-center py-4">
+                                    <i class="fas fa-exclamation-circle fa-2x text-muted mb-2"></i>
+                                    <p class="text-muted mb-1">No patients found.</p>
+                                    <small class="text-muted">Create a patient first to send referrals.</small>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                    <div id="noResultsMessage" style="display: none;" class="text-center py-4">
+                        <i class="fas fa-search fa-2x text-muted mb-2"></i>
+                        <p class="text-muted mb-1">No patients match your search criteria.</p>
+                        <small class="text-muted">Try a different search term</small>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+            </div>
+        </div>
+    </div>
+</div>
 
 {% endblock %}

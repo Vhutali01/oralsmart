@@ -19,7 +19,6 @@ class ReferralForm(forms.ModelForm):
             'reason',
             'clinical_summary',
             'urgency',
-            'specialty_required',
             'patient_preferences',
             'insurance_information',
             'appointment_date',
@@ -50,7 +49,6 @@ class ReferralForm(forms.ModelForm):
             'dental_screening': forms.Select(attrs={'class': 'form-control'}),
             'dietary_screening': forms.Select(attrs={'class': 'form-control'}),
             'urgency': forms.Select(attrs={'class': 'form-control'}),
-            'specialty_required': forms.Select(attrs={'class': 'form-control'}),
             'appointment_date': forms.DateTimeInput(attrs={
                 'type': 'datetime-local',
                 'class': 'form-control'
@@ -64,7 +62,6 @@ class ReferralForm(forms.ModelForm):
             'reason': 'Reason for Referral',
             'clinical_summary': 'Clinical Summary',
             'urgency': 'Urgency Level',
-            'specialty_required': 'Specialty Required',
             'patient_preferences': 'Patient Preferences/Concerns',
             'insurance_information': 'Insurance Information',
             'appointment_date': 'Suggested Appointment Date (Optional)',

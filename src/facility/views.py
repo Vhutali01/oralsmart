@@ -17,6 +17,9 @@ from reportlab.lib.units import inch
 from assessments.models import DentalScreening, DietaryScreening
 from django.contrib import messages
 from django.conf import settings
+from referrals.models import Referral
+from django.utils import timezone
+from datetime import timedelta
 
 
 
@@ -427,11 +430,16 @@ def refer_patient(request, clinic_id):
         patient_id = request.POST.get('patient_id')
         if not patient_id:
             return HttpResponse("Missing patient_id", status=400)
+        
+        # Get referral details from session
+        referral_data = request.session.get('referral_details', {})
+        
         selected_sections = request.POST['selected_sections'].split(',')
         appointment_date = request.POST['appointment_date']
         appointment_time = request.POST['appointment_time']
         clinic = Clinic.objects.get(pk=clinic_id)
         patient = Patient.objects.get(pk=patient_id)
+        
         try:
             dental_data = DentalScreening.objects.get(patient_id=patient_id)
         except DentalScreening.DoesNotExist:
@@ -440,20 +448,71 @@ def refer_patient(request, clinic_id):
             dietary_data = DietaryScreening.objects.get(patient_id=patient_id)
         except DietaryScreening.DoesNotExist:
             dietary_data = None
+        
         if not dental_data and not dietary_data:
             messages.error(request, "No screening found for this patient. Please complete at least one screening before referral.")
             return redirect('clinics')
+        
+        # Combine appointment date and time
+        combined_appointment = None
+        if appointment_date and appointment_time:
+            try:
+                appointment_datetime_str = f"{appointment_date} {appointment_time}"
+                combined_appointment = datetime.strptime(appointment_datetime_str, '%Y-%m-%d %H:%M')
+                combined_appointment = timezone.make_aware(combined_appointment)
+            except ValueError:
+                combined_appointment = None
+        
+        # Get referring user's clinic (fallback to receiving clinic if not set)
+        referring_clinic = clinic
+        
+        # Create Referral object with all details
+        referral = Referral.objects.create(
+            patient=patient,
+            dental_screening=dental_data,
+            dietary_screening=dietary_data,
+            referring_user=request.user,
+            referring_facility=referring_clinic,
+            receiving_facility=clinic,
+            reason=referral_data.get('reason', 'Referral from report'),
+            clinical_summary=referral_data.get('clinical_summary', ''),
+            urgency=referral_data.get('urgency', 'routine'),
+            patient_preferences=referral_data.get('patient_preferences', ''),
+            insurance_information=referral_data.get('insurance_information', ''),
+            appointment_date=combined_appointment,
+            status='sent',
+            sent_at=timezone.now(),
+            expires_at=timezone.now() + timedelta(days=30),
+            delivery_method='email',
+            delivery_status='sent'
+        )
+        
         pdf_buffer = generate_pdf_buffer(patient, dental_data, dietary_data, selected_sections)
+        
         # Compose and send email
         recipient_list = [clinic.email] if clinic.email else []
         email = EmailMessage(
-            subject=f"Referral for {patient.name} {patient.surname}",
-            body=f"Patient {patient.name} {patient.surname} is referred for an appointment on {appointment_date} at {appointment_time}.",
+            subject=f"Referral #{referral.referral_number} for {patient.name} {patient.surname}",
+            body=f"""Patient {patient.name} {patient.surname} is referred for an appointment on {appointment_date} at {appointment_time}.
+
+Referral Details:
+- Urgency: {referral.urgency.title()}
+- Reason: {referral.reason}
+
+{referral.clinical_summary}
+
+Referral Number: {referral.referral_number}
+""",
             to=recipient_list,
         )
         email.attach(f"report_{patient.name}_{patient.surname}.pdf", pdf_buffer.getvalue(), 'application/pdf')
         email.send()
-        return render(request, 'facility/referral_success.html', {'clinic': clinic})
+        
+        # Clear referral details from session after successful creation
+        if 'referral_details' in request.session:
+            del request.session['referral_details']
+        
+        return render(request, 'facility/referral_success.html', {'clinic': clinic, 'referral': referral})
     else:
         return HttpResponse(status=405)
 

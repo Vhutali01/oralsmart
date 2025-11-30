@@ -19,7 +19,7 @@ from patient.views import create_patient, patient_list_view
 from userauth.views import login_user, logout_user,register_user, home_view, landing
 from userprofile.views import profile_view, get_professions, edit_name, edit_contact, edit_profession, edit_email, edit_phone, edit_address
 from assessments.views import dental_screening, dietary_screening
-from reports.views import generate_pdf, view_report, send_report_email 
+from reports.views import generate_pdf, view_report, send_report_email, save_referral_details
 from userauth.views import activate, change_password, req_password_reset, confirm_password_reset
 from facility.views import clinic_list, refer_patient
 from django.conf import settings
@@ -64,6 +64,7 @@ urlpatterns = [
     path('reports/report/<int:patient_id>/', view_report, name='report'),
     path('reports/<int:patient_id>/', generate_pdf, name='generate_pdf'),
     path('reports/send-email/<int:patient_id>/', send_report_email, name='send_report_email'),
+    path('reports/save-referral/<int:patient_id>/', save_referral_details, name='save_referral_details'),
 
     #for activating account
     path('activate/<uidb64>/<token>/', activate, name='activate'),

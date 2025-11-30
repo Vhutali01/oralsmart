@@ -19,17 +19,6 @@ class Referral(models.Model):
         ('emergency', 'Emergency')
     ]
     
-    SPECIALTY_CHOICES = [
-        ('general', 'General Dentistry'),
-        ('orthodontics', 'Orthodontics'),
-        ('pediatric', 'Pediatric Dentistry'),
-        ('oral_surgery', 'Oral Surgery'),
-        ('endodontics', 'Endodontics'),
-        ('periodontics', 'Periodontics'),
-        ('prosthodontics', 'Prosthodontics'),
-        ('other', 'Other')
-    ]
-    
     DELIVERY_METHOD_CHOICES = [
         ('internal', 'Internal System'),
         ('api', 'API'),
@@ -83,7 +72,6 @@ class Referral(models.Model):
     reason = models.TextField(help_text="Brief reason for referral")
     clinical_summary = models.TextField(help_text="Detailed clinical findings and notes")
     urgency = models.CharField(max_length=20, choices=URGENCY_CHOICES, default='routine')
-    specialty_required = models.CharField(max_length=30, choices=SPECIALTY_CHOICES, default='general')
     
     # Additional information
     patient_preferences = models.TextField(blank=True, help_text="Patient/parent preferences or concerns")

@@ -11,93 +11,7 @@ from .forms import ReferralForm, ReferralCommentForm, ReferralStatusUpdateForm, 
 from .services import ReferralRouter
 
 
-@login_required
-def referral_list(request):
-    """
-    List all referrals (sent and received) for the current user
-    """
-    user = request.user
-    
-    # Referrals sent by this user
-    sent_referrals = Referral.objects.filter(referring_user=user).select_related(
-        'patient', 'receiving_facility', 'referring_facility'
-    )
-    
-    # Referrals received by this user directly
-    received_referrals = Referral.objects.filter(
-        receiving_user=user
-    ).select_related('patient', 'referring_user', 'referring_facility')
-    
-    # Split received referrals into incoming (need attention) and history (already handled)
-    incoming_referrals = received_referrals.filter(status='sent').order_by('-created_at')
-    history_referrals = received_referrals.exclude(status='sent').order_by('-updated_at')
-    
-    # Filter by status if provided
-    status_filter = request.GET.get('status')
-    if status_filter:
-        sent_referrals = sent_referrals.filter(status=status_filter)
-        if status_filter == 'sent':
-            incoming_referrals = incoming_referrals.filter(status=status_filter)
-        else:
-            history_referrals = history_referrals.filter(status=status_filter)
-    
-    # Calculate counts for dashboard
-    incoming_count = incoming_referrals.count()
-    history_count = history_referrals.count()
-    sent_count = sent_referrals.count()
-    completed_count = sent_referrals.filter(status='completed').count()
-    
-    context = {
-        'sent_referrals': sent_referrals[:10],  # Latest 10
-        'incoming_referrals': incoming_referrals[:10],  # Latest 10 incoming
-        'history_referrals': history_referrals[:10],  # Latest 10 history
-        'status_filter': status_filter,
-        'incoming_count': incoming_count,
-        'history_count': history_count,
-        'sent_count': sent_count,
-        'completed_count': completed_count,
-    }
-    
-    return render(request, 'referrals/referral_list.html', context)
 
-
-@login_required
-def referral_create(request):
-    """
-    Create a new referral
-    """
-    if request.method == 'POST':
-        form = ReferralForm(request.POST, user=request.user)
-        
-        if form.is_valid():
-            referral = form.save(commit=False)
-            referral.referring_user = request.user
-            
-            # Set referring_facility to None for now (can be enhanced later)
-            referral.referring_facility = None
-            
-            referral.save()
-            
-            # Send the referral
-            router = ReferralRouter()
-            success = router.send_referral(referral)
-            
-            if success:
-                messages.success(
-                    request,
-                    f'Referral {referral.referral_number} created and sent successfully!'
-                )
-            else:
-                messages.warning(
-                    request,
-                    f'Referral {referral.referral_number} created but delivery failed. It will be retried automatically.'
-                )
-            
-            return redirect('referrals:detail', pk=referral.pk)
-    else:
-        form = ReferralForm(user=request.user)
-    
-    return render(request, 'referrals/referral_form.html', {'form': form})
 
 
 @login_required
@@ -111,22 +25,36 @@ def referral_detail(request, pk):
     user = request.user
     
     is_sender = referral.referring_user == user
-    is_receiver = referral.receiving_user == user
+    is_receiver = (referral.receiving_user == user) if referral.receiving_user else False
     
-    if not (is_sender or is_receiver):
+    # Allow access if user is sender, receiver, or has access through their facility
+    user_facilities = []
+    if hasattr(user, 'profile'):
+        # In future, check if user belongs to referring or receiving facility
+        pass
+    
+    has_access = is_sender or is_receiver or user.is_staff
+    
+    if not has_access:
         return HttpResponseForbidden("You don't have permission to view this referral.")
     
     # Handle comment submission
-    if request.method == 'POST' and 'comment' in request.POST:
+    if request.method == 'POST' and 'submit_comment' in request.POST:
         comment_form = ReferralCommentForm(request.POST)
         if comment_form.is_valid():
             comment = comment_form.save(commit=False)
             comment.referral = referral
             comment.author = user
+            comment.author_name = user.get_full_name() or user.username
             comment.is_internal = True
-            comment.save()
-            messages.success(request, 'Comment added successfully.')
-            return redirect('referrals:detail', pk=pk)
+            try:
+                comment.save()
+                messages.success(request, 'Comment added successfully.')
+                return redirect('referrals:detail', pk=pk)
+            except Exception as e:
+                messages.error(request, f'Error saving comment: {str(e)}')
+        else:
+            messages.error(request, f'Invalid form data: {comment_form.errors}')
     else:
         comment_form = ReferralCommentForm()
     
@@ -258,7 +186,7 @@ def referral_cancel(request, pk):
         referral.status = 'cancelled'
         referral.save()
         messages.success(request, 'Referral cancelled.')
-        return redirect('referrals:list')
+        return redirect('patient_list')
     
     return render(request, 'referrals/referral_cancel_confirm.html', {'referral': referral})
 

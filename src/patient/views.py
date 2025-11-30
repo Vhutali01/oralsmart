@@ -67,6 +67,8 @@ def create_patient(request):
 def patient_list_view(request):
     """View to display all patients created by the current user with search functionality"""
     from referrals.models import Referral
+    from assessments.models import DentalScreening, DietaryScreening
+    from django.db.models import Exists, OuterRef
     
     user = request.user
     
@@ -74,7 +76,11 @@ def patient_list_view(request):
     search_query = request.GET.get('search', '').strip()
     
     # Base queryset - only show patients created by the current user
-    patients = Patient.objects.filter(created_by=request.user)
+    # Annotate with screening status for display
+    patients = Patient.objects.filter(created_by=request.user).annotate(
+        has_dental_screening=Exists(DentalScreening.objects.filter(patient=OuterRef('pk'))),
+        has_dietary_screening=Exists(DietaryScreening.objects.filter(patient=OuterRef('pk')))
+    )
     
     # Apply search filter if search query exists
     if search_query:
@@ -105,6 +111,15 @@ def patient_list_view(request):
         receiving_user=user
     ).select_related('patient', 'referring_user', 'referring_facility').order_by('-created_at')
     
+    # Get all patients with screening status annotations
+    # Limit to most recent 50 patients for modal performance
+    eligible_patients = Patient.objects.filter(
+        created_by=request.user
+    ).annotate(
+        has_dental_screening=Exists(DentalScreening.objects.filter(patient=OuterRef('pk'))),
+        has_dietary_screening=Exists(DietaryScreening.objects.filter(patient=OuterRef('pk')))
+    ).order_by('-id')[:50]
+    
     context = {
         'patients': page_obj,
         'page_obj': page_obj,
@@ -114,6 +129,7 @@ def patient_list_view(request):
         'total_patients': paginator.count,
         'sent_referrals': sent_referrals[:10],
         'received_referrals': received_referrals[:10],
+        'eligible_patients': eligible_patients,
         'back_url': '/home/',
     }
     

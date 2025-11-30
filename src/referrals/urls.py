@@ -5,8 +5,6 @@ app_name = 'referrals'
 
 urlpatterns = [
     # Main referral views (require login)
-    path('', views.referral_list, name='list'),
-    path('create/', views.referral_create, name='create'),
     path('<int:pk>/', views.referral_detail, name='detail'),
     path('<int:pk>/resend/', views.referral_resend, name='resend'),
     path('<int:pk>/cancel/', views.referral_cancel, name='cancel'),

@@ -163,7 +163,6 @@ Referral Number: {referral.referral_number}
 Patient: {referral.patient.name} {referral.patient.surname}
 Age: {referral.patient.age}
 Urgency: {referral.urgency.title()}
-Specialty: {referral.get_specialty_required_display()}
 Reason: {referral.reason}
 
 Please log in to view full details and acknowledge receipt.
@@ -256,7 +255,6 @@ Gender: {referral.patient.get_gender_display()}
 REFERRAL DETAILS:
 Referral Number: {referral.referral_number}
 Urgency: {referral.urgency.title()}
-Specialty Required: {referral.get_specialty_required_display()}
 Reason: {referral.reason}
 
 REFERRING PROVIDER:
@@ -310,7 +308,6 @@ OralSmart Referral System
                 <h3>Referral Details</h3>
                 <p><strong>Referral Number:</strong> {referral.referral_number}<br>
                 <strong>Urgency:</strong> {referral.urgency.title()}<br>
-                <strong>Specialty Required:</strong> {referral.get_specialty_required_display()}<br>
                 <strong>Reason:</strong> {referral.reason}</p>
             </div>
             

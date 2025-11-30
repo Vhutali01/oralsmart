@@ -19,7 +19,6 @@ class ReferralAdmin(admin.ModelAdmin):
         'status',
         'urgency',
         'delivery_status',
-        'specialty_required',
         'created_at',
         'sent_at'
     ]
@@ -56,7 +55,6 @@ class ReferralAdmin(admin.ModelAdmin):
                 'reason',
                 'clinical_summary',
                 'urgency',
-                'specialty_required',
                 'patient_preferences',
                 'insurance_information'
             )
