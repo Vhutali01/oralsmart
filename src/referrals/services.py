@@ -132,32 +132,48 @@ class ReferralRouter:
         """
         Send to internal OralSmart users
         """
+        from notifications.models import Notification
+        from django.urls import reverse
+        
         users = referral.receiving_facility.associated_users.all()
         
         if not users.exists():
             logger.warning(f"No users associated with facility {referral.receiving_facility.name}")
             return False
         
+        # Determine notification type based on urgency
+        if referral.urgency == 'emergency':
+            notification_type = 'emergency_referral'
+        elif referral.urgency == 'urgent':
+            notification_type = 'urgent_referral'
+        else:
+            notification_type = 'new_referral'
+        
         # Create in-app notification for each user
-        # Note: You'll need to implement a Notification model
         for user in users:
-            # TODO: Implement notification system
-            # Notification.objects.create(
-            #     user=user,
-            #     notification_type='new_referral',
-            #     title=f'New Referral: {referral.patient.name}',
-            #     message=f'{referral.urgency.title()} referral received from {referral.referring_facility.name}',
-            #     referral=referral
-            # )
-            
-            # Send email notification too
             try:
-                send_mail(
-                    subject=f'New Patient Referral - {referral.referral_number}',
-                    message=f'''
+                # Create notification
+                Notification.objects.create(
+                    user=user,
+                    notification_type=notification_type,
+                    title=f'New Referral: {referral.patient.name} {referral.patient.surname}',
+                    message=f'{referral.urgency.title()} referral received from {referral.referring_facility.name}. Patient: {referral.patient.name} {referral.patient.surname}, Age: {referral.patient.age}',
+                    referral=referral,
+                    action_url=f'/referrals/{referral.id}/'
+                )
+                logger.info(f"Created in-app notification for user {user.username}")
+            except Exception as e:
+                logger.error(f"Failed to create notification for {user.username}: {str(e)}")
+            
+            # Send email notification for urgent/emergency cases
+            if referral.urgency in ['urgent', 'emergency']:
+                try:
+                    send_mail(
+                        subject=f'🚨 {referral.urgency.upper()} Referral - {referral.referral_number}',
+                        message=f'''
 Dear {user.get_full_name() or user.username},
 
-You have received a new patient referral in OralSmart.
+You have received a {referral.urgency.upper()} patient referral in OralSmart.
 
 Referral Number: {referral.referral_number}
 Patient: {referral.patient.name} {referral.patient.surname}
@@ -171,13 +187,13 @@ View Referral: {settings.SITE_URL}/referrals/{referral.id}/
 
 Best regards,
 OralSmart System
-                    ''',
-                    from_email=settings.DEFAULT_FROM_EMAIL,
-                    recipient_list=[user.email],
-                    fail_silently=False,
-                )
-            except Exception as e:
-                logger.error(f"Failed to send email to {user.email}: {str(e)}")
+                        ''',
+                        from_email=settings.DEFAULT_FROM_EMAIL,
+                        recipient_list=[user.email],
+                        fail_silently=True,
+                    )
+                except Exception as e:
+                    logger.error(f"Failed to send email to {user.email}: {str(e)}")
         
         return True
     

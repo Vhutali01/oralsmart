@@ -10,6 +10,10 @@ urlpatterns = [
     path('<int:pk>/cancel/', views.referral_cancel, name='cancel'),
     path('stats/', views.referral_stats, name='stats'),
     
+    # API endpoints for referral creation
+    path('api/create-practitioner-referral/', views.create_practitioner_referral, name='create_practitioner_referral'),
+    path('api/create-clinic-referral/', views.create_clinic_referral, name='create_clinic_referral'),
+    
     # Public portal view (no login required)
     path('view/<str:access_token>/', views.portal_view, name='portal_view'),
 ]

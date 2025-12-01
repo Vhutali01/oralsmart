@@ -1,14 +1,17 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
-from django.http import JsonResponse, HttpResponseForbidden
+from django.http import JsonResponse, HttpResponseForbidden, FileResponse
 from django.utils import timezone
 from django.db.models import Q
 from django.core.paginator import Paginator
+import io
+from datetime import datetime
 
 from .models import Referral, ReferralComment, ReferralDeliveryLog
 from .forms import ReferralForm, ReferralCommentForm, ReferralStatusUpdateForm, PortalAcknowledgeForm
 from .services import ReferralRouter
+from reports.views import generate_pdf_buffer
 
 
 
@@ -26,14 +29,15 @@ def referral_detail(request, pk):
     
     is_sender = referral.referring_user == user
     is_receiver = (referral.receiving_user == user) if referral.receiving_user else False
+    is_receiving_practitioner = (referral.receiving_practitioner == user) if referral.receiving_practitioner else False
     
-    # Allow access if user is sender, receiver, or has access through their facility
+    # Allow access if user is sender, receiver, receiving practitioner, or has access through their facility
     user_facilities = []
     if hasattr(user, 'profile'):
         # In future, check if user belongs to referring or receiving facility
         pass
     
-    has_access = is_sender or is_receiver or user.is_staff
+    has_access = is_sender or is_receiver or is_receiving_practitioner or user.is_staff
     
     if not has_access:
         return HttpResponseForbidden("You don't have permission to view this referral.")
@@ -206,14 +210,14 @@ def referral_stats(request):
     
     # Received referrals stats
     received_total = Referral.objects.filter(
-        Q(receiving_user=user) | Q(receiving_facility__in=user_facilities)
+        Q(receiving_user=user) | Q(receiving_facility__in=user_facilities) | Q(receiving_practitioner=user)
     ).count()
     received_pending = Referral.objects.filter(
-        Q(receiving_user=user) | Q(receiving_facility__in=user_facilities),
+        Q(receiving_user=user) | Q(receiving_facility__in=user_facilities) | Q(receiving_practitioner=user),
         status='sent'
     ).count()
     received_acknowledged = Referral.objects.filter(
-        Q(receiving_user=user) | Q(receiving_facility__in=user_facilities),
+        Q(receiving_user=user) | Q(receiving_facility__in=user_facilities) | Q(receiving_practitioner=user),
         status='acknowledged'
     ).count()
     
@@ -227,3 +231,258 @@ def referral_stats(request):
     }
     
     return render(request, 'referrals/referral_stats.html', context)
+
+
+@login_required
+def create_practitioner_referral(request):
+    """
+    API endpoint to create a referral to an individual practitioner
+    """
+    from django.contrib.auth.models import User
+    from patient.models import Patient
+    from assessments.models import DentalScreening, DietaryScreening
+    from notifications.models import Notification
+    from datetime import timedelta
+    
+    if request.method != 'POST':
+        return JsonResponse({'error': 'POST method required'}, status=405)
+    
+    try:
+        # Get required fields
+        patient_id = request.POST.get('patient_id')
+        practitioner_id = request.POST.get('practitioner_id')
+        reason = request.POST.get('reason', '')
+        clinical_summary = request.POST.get('clinical_summary', '')
+        urgency = request.POST.get('urgency', 'routine')
+        recommended_profession = request.POST.get('recommended_profession', '')
+        
+        # Validate patient
+        try:
+            patient = Patient.objects.get(id=patient_id, created_by=request.user)
+        except Patient.DoesNotExist:
+            return JsonResponse({'error': 'Patient not found'}, status=404)
+        
+        # Validate practitioner
+        try:
+            practitioner = User.objects.get(id=practitioner_id)
+            if not hasattr(practitioner, 'profile') or not practitioner.profile.accepts_referrals:
+                return JsonResponse({'error': 'This practitioner is not accepting referrals'}, status=400)
+        except User.DoesNotExist:
+            return JsonResponse({'error': 'Practitioner not found'}, status=404)
+        
+        # Get screenings if available
+        try:
+            dental_screening = DentalScreening.objects.get(patient=patient)
+        except DentalScreening.DoesNotExist:
+            dental_screening = None
+            
+        try:
+            dietary_screening = DietaryScreening.objects.get(patient=patient)
+        except DietaryScreening.DoesNotExist:
+            dietary_screening = None
+        
+        # Get user's affiliated facility if any
+        referring_facility = None
+        if hasattr(request.user, 'profile') and request.user.profile.affiliated_facility:
+            referring_facility = request.user.profile.affiliated_facility
+        
+        # Create the referral
+        referral = Referral.objects.create(
+            referral_type='practitioner',
+            patient=patient,
+            referring_user=request.user,
+            referring_facility=referring_facility,
+            receiving_practitioner=practitioner,
+            receiving_facility=practitioner.profile.affiliated_facility if hasattr(practitioner, 'profile') else None,
+            dental_screening=dental_screening,
+            dietary_screening=dietary_screening,
+            reason=reason,
+            clinical_summary=clinical_summary,
+            urgency=urgency,
+            recommended_profession=recommended_profession,
+            status='sent',
+            delivery_method='internal',
+            delivery_status='delivered',
+            expires_at=timezone.now() + timedelta(days=90),
+            sent_at=timezone.now(),
+        )
+        
+        # Create notification for the practitioner
+        if urgency == 'emergency':
+            notification_type = 'emergency_referral'
+        elif urgency == 'urgent':
+            notification_type = 'urgent_referral'
+        else:
+            notification_type = 'new_referral'
+        
+        Notification.objects.create(
+            user=practitioner,
+            notification_type=notification_type,
+            title=f'New Referral: {patient.name} {patient.surname}',
+            message=f'{urgency.title()} referral received from {request.user.get_full_name() or request.user.username}. Patient: {patient.name} {patient.surname}, Age: {patient.age}',
+            referral=referral,
+            action_url=f'/referrals/{referral.id}/'
+        )
+        
+        return JsonResponse({
+            'success': True,
+            'message': f'Referral sent to {practitioner.get_full_name() or practitioner.username}',
+            'referral_id': referral.id,
+            'referral_number': referral.referral_number
+        })
+        
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)
+
+
+@login_required
+def create_clinic_referral(request):
+    """
+    API endpoint to create a referral to a clinic/facility.
+    """
+    from patient.models import Patient
+    from facility.models import Clinic
+    from assessments.models import DentalScreening, DietaryScreening
+    from notifications.models import Notification
+    from datetime import timedelta
+    
+    if request.method != 'POST':
+        return JsonResponse({'error': 'Method not allowed'}, status=405)
+    
+    try:
+        patient_id = request.POST.get('patient_id')
+        clinic_id = request.POST.get('clinic_id')
+        urgency = request.POST.get('urgency', 'routine')
+        reason = request.POST.get('reason', '')
+        clinical_summary = request.POST.get('clinical_summary', '')
+        patient_preferences = request.POST.get('patient_preferences', '')
+        recommended_profession = request.POST.get('recommended_profession', '')
+        
+        if not patient_id or not clinic_id:
+            return JsonResponse({'error': 'Patient ID and Clinic ID are required'}, status=400)
+        
+        # Validate patient
+        try:
+            patient = Patient.objects.get(id=patient_id)
+        except Patient.DoesNotExist:
+            return JsonResponse({'error': 'Patient not found'}, status=404)
+        
+        # Validate clinic
+        try:
+            clinic = Clinic.objects.get(id=clinic_id)
+        except Clinic.DoesNotExist:
+            return JsonResponse({'error': 'Clinic not found'}, status=404)
+        
+        # Get screenings if available
+        try:
+            dental_screening = DentalScreening.objects.get(patient=patient)
+        except DentalScreening.DoesNotExist:
+            dental_screening = None
+            
+        try:
+            dietary_screening = DietaryScreening.objects.get(patient=patient)
+        except DietaryScreening.DoesNotExist:
+            dietary_screening = None
+        
+        # Get user's affiliated facility if any
+        referring_facility = None
+        if hasattr(request.user, 'profile') and request.user.profile.affiliated_facility:
+            referring_facility = request.user.profile.affiliated_facility
+        
+        # Combine clinical_summary with patient preferences
+        full_summary = clinical_summary
+        if patient_preferences:
+            full_summary += f"\n\nPatient/Parent Preferences: {patient_preferences}"
+        
+        # Create the referral
+        referral = Referral.objects.create(
+            referral_type='facility',
+            patient=patient,
+            referring_user=request.user,
+            referring_facility=referring_facility,
+            receiving_facility=clinic,
+            dental_screening=dental_screening,
+            dietary_screening=dietary_screening,
+            reason=reason,
+            clinical_summary=full_summary,
+            urgency=urgency,
+            recommended_profession=recommended_profession,
+            status='sent',
+            delivery_method='internal',
+            delivery_status='delivered',
+            expires_at=timezone.now() + timedelta(days=90),
+            sent_at=timezone.now(),
+        )
+        
+        # Create notifications for clinic staff if they have users
+        if urgency == 'emergency':
+            notification_type = 'emergency_referral'
+        elif urgency == 'urgent':
+            notification_type = 'urgent_referral'
+        else:
+            notification_type = 'new_referral'
+        
+        # Find users affiliated with this clinic and notify them
+        from userprofile.models import Profile
+        clinic_users = Profile.objects.filter(affiliated_facility=clinic).select_related('user')
+        
+        for profile in clinic_users:
+            Notification.objects.create(
+                user=profile.user,
+                notification_type=notification_type,
+                title=f'New Referral to {clinic.name}: {patient.name} {patient.surname}',
+                message=f'{urgency.title()} referral received from {request.user.get_full_name() or request.user.username}. Patient: {patient.name} {patient.surname}, Age: {patient.age}',
+                referral=referral,
+                action_url=f'/referrals/{referral.id}/'
+            )
+        
+        return JsonResponse({
+            'success': True,
+            'message': f'Referral sent to {clinic.name}',
+            'referral_id': referral.id,
+            'referral_number': referral.referral_number
+        })
+        
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)
+
+
+@login_required
+def generate_referral_pdf(request, pk):
+    """
+    Generate PDF report for a specific referral
+    """
+    referral = get_object_or_404(Referral, pk=pk)
+    
+    # Check permissions
+    user = request.user
+    is_sender = referral.referring_user == user
+    is_receiver = (referral.receiving_user == user) if referral.receiving_user else False
+    is_receiving_practitioner = (referral.receiving_practitioner == user) if referral.receiving_practitioner else False
+    
+    has_access = is_sender or is_receiver or is_receiving_practitioner or user.is_staff
+    
+    if not has_access:
+        return HttpResponseForbidden("You don't have permission to download this referral report.")
+    
+    # Get patient data
+    patient = referral.patient
+    
+    # Get screening data
+    dental_data = referral.dental_screening
+    dietary_data = referral.dietary_screening
+    
+    # Generate PDF using the existing function from reports
+    pdf_buffer = generate_pdf_buffer(
+        patient=patient,
+        include_ai_assessment=True,
+        user=request.user,
+        recommended_professional=referral.recommended_profession
+    )
+    
+    # Create filename
+    filename = f"referral_{referral.referral_number}_{patient.name}_{patient.surname}.pdf"
+    
+    # Return PDF as response
+    pdf_buffer.seek(0)
+    return FileResponse(pdf_buffer, as_attachment=True, filename=filename, content_type='application/pdf')

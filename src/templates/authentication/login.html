@@ -1,7 +1,6 @@
 {% extends 'base.html' %}
 
-{% block content %}
-
+{% block messages %}
     {% if messages %}
         {% for message in messages %}
             <div class="alert alert-warning alert-dismissible fade show auto-dismiss-alert" role="alert">
@@ -10,6 +9,10 @@
             </div>
         {% endfor %}
     {% endif %}
+{% endblock %}
+
+{% block content %}
+
     <script>
     document.addEventListener('DOMContentLoaded', function() {
         setTimeout(function() {

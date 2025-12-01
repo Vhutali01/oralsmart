@@ -25,6 +25,10 @@ def profile_view(request):
     else:
         form = ProfilePictureForm(instance=profile)
 
+    # Get all clinics for dropdown
+    from facility.models import Clinic
+    clinics = Clinic.objects.all().order_by('name')
+    
     #gives the profile.html template context data it can use to populate itself
     context = {
         'first_name': user.first_name,
@@ -34,7 +38,12 @@ def profile_view(request):
         'address': profile.address,
         'profession': profile.profession,
         'show_navbar': False,
-        'form': form
+        'form': form,
+        'accepts_referrals': profile.accepts_referrals,
+        'availability_status': profile.availability_status,
+        'availability_choices': Profile.AVAILABILITY_STATUS,
+        'affiliated_clinic': profile.affiliated_facility,
+        'all_clinics': clinics,
     }
     
     return render(request, 'userprofile/profile.html', context)
@@ -245,3 +254,143 @@ def edit_address(request):
         # Return the edit form
         form = ProfileAddressForm(instance=profile)
         return render(request, 'userprofile/partials/address_form.html', {'form': form})
+
+
+# Practitioner Referral API Endpoints
+@login_required
+def get_practitioners(request):
+    """
+    API endpoint to get practitioners who accept referrals.
+    Can filter by profession type.
+    """
+    profession = request.GET.get('profession', '')
+    
+    # Get all practitioners who accept referrals
+    practitioners = Profile.objects.filter(
+        accepts_referrals=True
+    ).exclude(
+        user=request.user  # Exclude self
+    ).select_related('user', 'affiliated_facility')
+    
+    # Filter by profession if specified
+    if profession:
+        practitioners = practitioners.filter(profession=profession)
+    
+    # Filter by availability (exclude unavailable)
+    practitioners = practitioners.exclude(availability_status='unavailable')
+    
+    data = []
+    for p in practitioners:
+        data.append({
+            'id': p.user.id,
+            'name': p.user.get_full_name() or p.user.username,
+            'profession': p.profession,
+            'profession_display': p.get_profession_display(),
+            'specialization': p.specialization,
+            'availability': p.availability_status,
+            'availability_display': p.get_availability_status_display(),
+            'facility': p.affiliated_facility.name if p.affiliated_facility else None,
+            'facility_id': p.affiliated_facility.id if p.affiliated_facility else None,
+            'address': p.address or '',
+            'tel': p.tel or '',
+            'email': p.email or p.user.email,
+            'profile_picture': p.profile_picture_url,
+            'consultation_details': p.consultation_details,
+        })
+    
+    return JsonResponse({
+        'practitioners': data,
+        'count': len(data)
+    })
+
+
+@login_required
+def toggle_referral_acceptance(request):
+    """
+    Toggle the current user's referral acceptance status.
+    """
+    if request.method == 'POST':
+        profile, _ = Profile.objects.get_or_create(user=request.user)
+        profile.accepts_referrals = not profile.accepts_referrals
+        profile.save()
+        
+        return JsonResponse({
+            'success': True,
+            'accepts_referrals': profile.accepts_referrals,
+            'message': 'You are now accepting referrals.' if profile.accepts_referrals else 'You are no longer accepting referrals.'
+        })
+    
+    return JsonResponse({'error': 'POST method required'}, status=405)
+
+
+@login_required
+def update_availability(request):
+    """
+    Update the current user's availability status.
+    """
+    if request.method == 'POST':
+        status = request.POST.get('status', 'available')
+        
+        valid_statuses = ['available', 'busy', 'unavailable', 'on_leave']
+        if status not in valid_statuses:
+            return JsonResponse({'error': 'Invalid status'}, status=400)
+        
+        profile, _ = Profile.objects.get_or_create(user=request.user)
+        profile.availability_status = status
+        profile.save()
+        
+        return JsonResponse({
+            'success': True,
+            'availability_status': profile.availability_status,
+            'message': f'Your availability is now set to: {profile.get_availability_status_display()}'
+        })
+    
+    return JsonResponse({'error': 'POST method required'}, status=405)
+
+
+@login_required
+def edit_clinic(request):
+    """
+    HTMX view for editing user's affiliated clinic.
+    """
+    from facility.models import Clinic
+    
+    user = request.user
+    profile, _ = Profile.objects.get_or_create(user=user)
+    
+    if request.GET.get('cancel'):
+        # Return display view on cancel
+        clinics = Clinic.objects.all().order_by('name')
+        return render(request, 'userprofile/partials/clinic_display.html', {
+            'affiliated_clinic': profile.affiliated_facility,
+            'all_clinics': clinics,
+        })
+    
+    if request.method == 'POST':
+        clinic_id = request.POST.get('clinic_id')
+        
+        if clinic_id:
+            try:
+                clinic = Clinic.objects.get(id=clinic_id)
+                profile.affiliated_facility = clinic
+            except Clinic.DoesNotExist:
+                pass
+        else:
+            profile.affiliated_facility = None
+        
+        profile.save()
+        messages.success(request, 'Clinic affiliation updated successfully!')
+        
+        # Return display view after save
+        clinics = Clinic.objects.all().order_by('name')
+        return render(request, 'userprofile/partials/clinic_display.html', {
+            'affiliated_clinic': profile.affiliated_facility,
+            'all_clinics': clinics,
+        })
+    
+    # GET request - return edit form
+    clinics = Clinic.objects.all().order_by('name')
+    return render(request, 'userprofile/partials/clinic_form.html', {
+        'affiliated_clinic': profile.affiliated_facility,
+        'all_clinics': clinics,
+    })

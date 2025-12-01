@@ -33,6 +33,23 @@ class Profile(models.Model):
         ('enrolled_nurse', 'Enrolled Nurse'),
         ('nursing_assistant', 'Nursing Assistant'),
         ('midwife', 'Midwife'),
+        
+        # Dental Specialists (for referral recommendations)
+        ('orthodontist', 'Orthodontist'),
+        ('oral_surgeon', 'Oral Surgeon'),
+        ('periodontist', 'Periodontist'),
+        ('endodontist', 'Endodontist'),
+        ('pediatric_dentist', 'Pediatric Dentist'),
+        ('prosthodontist', 'Prosthodontist'),
+        ('oral_pathologist', 'Oral Pathologist'),
+        ('pediatrician', 'Pediatrician'),
+    ]
+    
+    AVAILABILITY_STATUS = [
+        ('available', 'Available'),
+        ('busy', 'Busy'),
+        ('unavailable', 'Unavailable'),
+        ('on_leave', 'On Leave'),
     ]
 
     user = models.OneToOneField(User, on_delete=models.CASCADE)
@@ -61,6 +78,58 @@ class Profile(models.Model):
     tel = models.CharField(max_length=64, null=True)
 
     profile_pic = models.ImageField(upload_to='profile/', default='images/default/default_profile_pic.jpg',null=True, blank=True)
+    
+    # Referral-related fields
+    accepts_referrals = models.BooleanField(
+        default=False,
+        help_text="Whether this practitioner accepts patient referrals"
+    )
+    
+    specialization = models.CharField(
+        max_length=255,
+        blank=True,
+        help_text="Areas of specialization or expertise"
+    )
+    
+    availability_status = models.CharField(
+        max_length=20,
+        choices=AVAILABILITY_STATUS,
+        default='available',
+        help_text="Current availability for accepting new patients"
+    )
+    
+    consultation_details = models.TextField(
+        blank=True,
+        help_text="Consultation hours, fees, or other relevant details"
+    )
+    
+    affiliated_facility = models.ForeignKey(
+        'facility.Clinic',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='affiliated_practitioners',
+        help_text="Primary facility/clinic this practitioner is affiliated with"
+    )
+    
+    # Working hours configuration
+    working_days = models.JSONField(
+        default=list,
+        blank=True,
+        help_text="List of working days (0=Monday, 6=Sunday). Default: [0,1,2,3,4] (Mon-Fri)"
+    )
+    work_start_time = models.TimeField(
+        default='08:00',
+        blank=True,
+        null=True,
+        help_text="Practitioner's start time"
+    )
+    work_end_time = models.TimeField(
+        default='17:00',
+        blank=True,
+        null=True,
+        help_text="Practitioner's end time"
+    )
 
     def get_profile_picture_url(self):
         """

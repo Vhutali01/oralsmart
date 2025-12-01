@@ -756,13 +756,22 @@
                                 </tr>
                             </table>
 
-                            <div class="form-section text-center mt-4">
+                            <div class="form-section text-center mt-4" style="display: flex; gap: 1rem; justify-content: center;">
+                                <button type="button" class="btn btn-outline-secondary" onclick="saveDraft()">
+                                    <i class="fas fa-save"></i> Save as Draft
+                                </button>
                                 {% if from_dietary %}
-                                    <button type="submit" class="btn btn-primary">Complete Assessment & Generate Report</button>
+                                    <button type="submit" class="btn btn-primary">
+                                        <i class="fas fa-check-circle"></i> Complete Assessment & Generate Report
+                                    </button>
                                 {% else %}
-                                    <button type="submit" class="btn btn-primary">Complete Dental Screening</button>
+                                    <button type="submit" class="btn btn-primary">
+                                        <i class="fas fa-check-circle"></i> Complete Dental Screening
+                                    </button>
                                 {% endif %}
                             </div>
+                            
+                            <input type="hidden" name="save_draft" id="save_draft" value="false">
                             
                         </div>
                     </div>
@@ -943,6 +952,14 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
     });
+
+    // Save as draft function
+    function saveDraft() {
+        if (confirm('Save your progress as a draft? You can resume this assessment later.')) {
+            document.getElementById('save_draft').value = 'true';
+            document.querySelector('form').submit();
+        }
+    }
 
 });
 </script>

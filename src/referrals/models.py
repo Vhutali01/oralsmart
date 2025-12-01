@@ -47,8 +47,21 @@ class Referral(models.Model):
         ('expired', 'Expired')
     ]
     
+    REFERRAL_TYPE_CHOICES = [
+        ('facility', 'To Facility/Clinic'),
+        ('practitioner', 'To Individual Practitioner'),
+    ]
+    
     # Unique identifier
     referral_number = models.CharField(max_length=20, unique=True, editable=False)
+    
+    # Referral type
+    referral_type = models.CharField(
+        max_length=20, 
+        choices=REFERRAL_TYPE_CHOICES, 
+        default='facility',
+        help_text="Whether this referral is to a facility or individual practitioner"
+    )
     
     # Patient & Assessment
     patient = models.ForeignKey(Patient, on_delete=models.PROTECT, related_name='referrals')
@@ -57,11 +70,30 @@ class Referral(models.Model):
     
     # Referring party
     referring_user = models.ForeignKey(User, on_delete=models.PROTECT, related_name='referrals_sent')
-    referring_facility = models.ForeignKey(Clinic, on_delete=models.PROTECT, related_name='referrals_from')
+    referring_facility = models.ForeignKey(Clinic, on_delete=models.PROTECT, related_name='referrals_from', null=True, blank=True)
     
-    # Receiving party (flexible for internal/external)
-    receiving_facility = models.ForeignKey(Clinic, on_delete=models.PROTECT, related_name='referrals_to')
+    # Receiving party - Facility (optional if practitioner referral)
+    receiving_facility = models.ForeignKey(Clinic, on_delete=models.PROTECT, related_name='referrals_to', null=True, blank=True)
+    
+    # Receiving party - Practitioner (new field for individual referrals)
+    receiving_practitioner = models.ForeignKey(
+        User, 
+        on_delete=models.SET_NULL, 
+        null=True, 
+        blank=True, 
+        related_name='practitioner_referrals_received',
+        help_text="Individual practitioner receiving the referral"
+    )
+    
+    # Legacy field - keep for backwards compatibility
     receiving_user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='referrals_received')
+    
+    # Recommended profession from report page
+    recommended_profession = models.CharField(
+        max_length=64,
+        blank=True,
+        help_text="The profession type recommended for this referral"
+    )
     
     # External provider details (for non-system providers)
     external_provider_name = models.CharField(max_length=255, blank=True, help_text="Name of external provider")

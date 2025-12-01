@@ -194,8 +194,8 @@
         
         <div class="mb-3">
             <label for="appointment_date" class="form-label fw-bold">Suggested Appointment Date:</label>
-            <input type="datetime-local" id="appointment_date" name="appointment_date" class="form-control">
-            <small class="form-text text-muted">Suggested appointment date/time (optional)</small>
+            <input type="date" id="appointment_date" name="appointment_date" class="form-control">
+            <small class="form-text text-muted">Suggested appointment date (optional). Time will be selected at the booking page.</small>
         </div>
     </div>
 </div>
@@ -305,9 +305,21 @@
             });
         });
 
-        // Email form submission
+        // Email form submission with confirmation
         document.getElementById('emailForm').addEventListener('submit', function(e) {
             e.preventDefault();
+            
+            // Show confirmation dialog
+            const recipientEmail = document.getElementById('recipient_email').value;
+            const ccEmails = document.getElementById('cc_emails').value;
+            let confirmMessage = `Are you sure you want to send this report to ${recipientEmail}?`;
+            if (ccEmails) {
+                confirmMessage += `\n\nCC: ${ccEmails}`;
+            }
+            
+            if (!confirm(confirmMessage)) {
+                return;
+            }
             
             const formData = new FormData(this);
             const statusDiv = document.getElementById('email-status');
@@ -437,6 +449,36 @@
             alert('An error occurred while saving referral details');
         });
     }
+    
+    // Setup appointment date restrictions
+    document.addEventListener('DOMContentLoaded', function() {
+        const dateInput = document.getElementById('appointment_date');
+        
+        if (dateInput) {
+            // Set minimum date to tomorrow
+            const tomorrow = new Date();
+            tomorrow.setDate(tomorrow.getDate() + 1);
+            dateInput.min = tomorrow.toISOString().split('T')[0];
+            
+            // Set maximum date to 3 months from now
+            const maxDate = new Date();
+            maxDate.setMonth(maxDate.getMonth() + 3);
+            dateInput.max = maxDate.toISOString().split('T')[0];
+            
+            // Validate selected date
+            dateInput.addEventListener('change', function() {
+                const selectedDate = new Date(this.value);
+                const dayOfWeek = selectedDate.getDay();
+                
+                // Check if weekend
+                if (dayOfWeek === 0 || dayOfWeek === 6) {
+                    alert('Please select a weekday (Monday-Friday). Most dental practices are closed on weekends.');
+                    this.value = '';
+                    return;
+                }
+            });
+        }
+    });
 </script>
 
 {% endblock %}

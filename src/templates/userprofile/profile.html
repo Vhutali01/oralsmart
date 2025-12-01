@@ -3,8 +3,7 @@
     {% include "navbar2.html" %}
 {% endblock %}
 
-{% block content %}
-
+{% block messages %}
     {% if messages %}
         {% for message in messages %}
             {% if message.tags == 'success' %}
@@ -19,6 +18,9 @@
             </div>
         {% endfor %}
     {% endif %}
+{% endblock %}
+
+{% block content %}
 
     <section style="background-color: #eee;">
     <div class="container py-5">
@@ -64,6 +66,49 @@
                 </div>
             </div>
             </div>
+
+            <!-- Referral Settings Card -->
+            <div class="card mb-4">
+                <div class="card-body">
+                    <h6 class="mb-3">Referral Settings</h6>
+                    
+                    <!-- Accept Referrals Toggle -->
+                    <div class="d-flex justify-content-between align-items-center mb-3 pb-3 border-bottom">
+                        <div>
+                            <p class="mb-0 fw-bold">Accept Referrals</p>
+                            <small class="text-muted">Allow other practitioners to refer patients to you</small>
+                        </div>
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" 
+                                   type="checkbox" 
+                                   role="switch" 
+                                   id="acceptReferralsToggle"
+                                   {% if accepts_referrals %}checked{% endif %}
+                                   style="width: 3em; height: 1.5em; cursor: pointer;">
+                        </div>
+                    </div>
+                    
+                    <!-- Availability Status Dropdown -->
+                    <div class="mb-2">
+                        <label for="availabilityStatus" class="form-label fw-bold">
+                            Availability Status
+                        </label>
+                        <select class="form-select" id="availabilityStatus">
+                            {% for value, label in availability_choices %}
+                                <option value="{{ value }}" {% if availability_status == value %}selected{% endif %}>
+                                    {{ label }}
+                                </option>
+                            {% endfor %}
+                        </select>
+                        <small class="text-muted">This affects your visibility on the booking page</small>
+                    </div>
+                    
+                    <!-- Status indicator -->
+                    <div class="alert alert-info mt-3 mb-0" id="referralStatusMessage" style="display: none;">
+                        <span id="statusMessageText"></span>
+                    </div>
+                </div>
+            </div>
         </div>
         <div class="col-lg-8">
             <div class="card mb-4">
@@ -86,6 +131,10 @@
                 
                 <!-- Profession Section with HTMX -->
                 {% include 'userprofile/partials/profession_display.html' %}
+                <hr>
+                
+                <!-- Clinic Affiliation Section with HTMX -->
+                {% include 'userprofile/partials/clinic_display.html' with affiliated_clinic=affiliated_clinic all_clinics=all_clinics %}
             </div>
             </div>
         
@@ -287,6 +336,83 @@
                 } else {
                     previewDiv.style.display = 'none';
                 }
+            });
+        }
+
+        // Referral Settings - Accept Referrals Toggle
+        const acceptReferralsToggle = document.getElementById('acceptReferralsToggle');
+        const statusMessage = document.getElementById('referralStatusMessage');
+        const statusMessageText = document.getElementById('statusMessageText');
+
+        function showStatusMessage(message, type = 'info') {
+            statusMessage.className = `alert alert-${type} mt-3 mb-0`;
+            statusMessageText.textContent = message;
+            statusMessage.style.display = 'block';
+            
+            // Auto-hide after 5 seconds
+            setTimeout(function() {
+                statusMessage.style.display = 'none';
+            }, 5000);
+        }
+
+        if (acceptReferralsToggle) {
+            acceptReferralsToggle.addEventListener('change', function() {
+                const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+                
+                fetch('{% url "toggle_referral_acceptance" %}', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                        'X-CSRFToken': csrfToken
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        showStatusMessage(data.message, 'success');
+                    } else {
+                        showStatusMessage('Error updating referral acceptance', 'danger');
+                        // Revert toggle on error
+                        acceptReferralsToggle.checked = !acceptReferralsToggle.checked;
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    showStatusMessage('Error updating referral acceptance', 'danger');
+                    // Revert toggle on error
+                    acceptReferralsToggle.checked = !acceptReferralsToggle.checked;
+                });
+            });
+        }
+
+        // Referral Settings - Availability Status Dropdown
+        const availabilityStatus = document.getElementById('availabilityStatus');
+        
+        if (availabilityStatus) {
+            availabilityStatus.addEventListener('change', function() {
+                const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+                const status = this.value;
+                
+                fetch('{% url "update_availability" %}', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                        'X-CSRFToken': csrfToken
+                    },
+                    body: `status=${status}`
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        showStatusMessage(data.message, 'success');
+                    } else {
+                        showStatusMessage('Error updating availability status', 'danger');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    showStatusMessage('Error updating availability status', 'danger');
+                });
             });
         }
     });

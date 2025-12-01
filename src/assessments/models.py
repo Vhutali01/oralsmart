@@ -39,6 +39,9 @@ class DentalScreening(models.Model):
     #Section 5
     teeth_data = models.JSONField()  #stores all tooth values as a dict
 
+    # Draft status for save-and-resume functionality
+    is_draft = models.BooleanField(default=False, help_text="True if this is a saved draft, False if completed")
+    updated_at = models.DateTimeField(auto_now=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
 class DietaryScreening(models.Model):

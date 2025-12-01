@@ -1,0 +1,39 @@
+<!-- Clinic Affiliation Edit Form Partial -->
+<div class="row" id="clinic-section">
+    <div class="col-sm-3">
+        <p class="mb-0">Affiliated Clinic</p>
+    </div>
+    <div class="col-sm-9">
+        <form hx-post="{% url 'edit_clinic' %}" hx-target="#clinic-section" hx-swap="outerHTML">
+            {% csrf_token %}
+            <div class="input-group">
+                <select name="clinic_id" class="form-select">
+                    <option value="">None (No affiliation)</option>
+                    {% for clinic in all_clinics %}
+                        <option value="{{ clinic.id }}" {% if affiliated_clinic and affiliated_clinic.id == clinic.id %}selected{% endif %}>
+                            {{ clinic.name }}
+                        </option>
+                    {% endfor %}
+                </select>
+                <div class="input-group-append">
+                    <div class="btn-group" role="group">
+                        <button type="submit" class="btn btn-primary" title="Save changes">
+                            <i class="fas fa-check"></i>
+                            <span class="htmx-indicator ms-1">
+                                <i class="fas fa-spinner fa-spin"></i>
+                            </span>
+                        </button>
+                        <button type="button" 
+                                class="btn btn-outline-secondary"
+                                hx-get="{% url 'edit_clinic' %}?cancel=true" 
+                                hx-target="#clinic-section" 
+                                hx-swap="outerHTML"
+                                title="Cancel editing">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>

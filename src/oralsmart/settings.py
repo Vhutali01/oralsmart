@@ -54,6 +54,7 @@ INSTALLED_APPS = [
     'referrals',
     'ml_models',
     'tips.apps.TipsConfig',
+    'notifications',
 
 ]
 

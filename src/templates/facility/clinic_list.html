@@ -198,6 +198,19 @@
         transform: translateY(-1px);
     }
     
+    /* Practitioner cards */
+    .practitioner-card {
+        transition: all 0.2s ease;
+        cursor: pointer;
+        border: 2px solid #e9ecef;
+    }
+    
+    .practitioner-card:hover {
+        border-color: #4285f4;
+        box-shadow: 0 4px 12px rgba(66, 133, 244, 0.15);
+        transform: translateY(-2px);
+    }
+    
     .no-clinics {
         text-align: center;
         color: #666;
@@ -269,138 +282,736 @@
     <h4>
         Complete and Confirm your Booking
     </h4>
+    {% if recommended_profession %}
+    <div class="alert alert-success d-inline-block mt-2">
+        <i class="fas fa-lightbulb"></i> 
+        <strong>Recommended:</strong> {{ recommended_profession }}
+    </div>
+    {% endif %}
 </div>
 
-<div class="search-container">
-    <form method="GET" class="search-form">
-        <select class="search-dropdown" name="center_type">
-            <option value="">Choose Healthcare Center</option>
-            <option value="public" {% if center_type == 'public' %}selected{% endif %}>Public</option>
-            <option value="private" {% if center_type == 'private' %}selected{% endif %}>Private</option>
-        </select>
-        <input type="text" class="search-input" name="search" placeholder="Search by name, address, description..." value="{{ search_query }}">
-        <button type="submit" class="search-btn">Search</button>
-    </form>
-</div>
+<div class="card shadow-sm">
+    <div class="card-header bg-primary text-white">
+        <h5 class="mb-0"><i class="fas fa-share-square"></i> Select Referral Destination</h5>
+    </div>
+    <div class="card-body">
+        <!-- Tabs for Clinics and Practitioners -->
+        <ul class="nav nav-tabs mb-3" role="tablist">
+            <li class="nav-item">
+                <a class="nav-link active" data-bs-toggle="tab" href="#clinicsTab" role="tab">
+                    <i class="fas fa-hospital"></i> Clinics
+                    {% if clinics.count %}
+                        <span class="badge bg-secondary ms-1">{{ clinics.count }}</span>
+                    {% endif %}
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" data-bs-toggle="tab" href="#practitionersTab" role="tab">
+                    <i class="fas fa-user-md"></i> Practitioners
+                    {% if practitioners.count %}
+                        <span class="badge bg-secondary ms-1">{{ practitioners.count }}</span>
+                    {% endif %}
+                </a>
+            </li>
+        </ul>
 
-{% if clinics %}
-    <div class="results-info">
-        {% if search_query %}
-            Found {{ clinics.count }} result{{ clinics.count|pluralize }} for "{{ search_query }}"
+        <div class="tab-content">
+            <!-- Clinics Tab -->
+            <div class="tab-pane fade show active" id="clinicsTab" role="tabpanel">
+                {% if profession_display_name %}
+                    <div class="alert alert-info mb-3" role="alert">
+                        <i class="fas fa-info-circle me-2"></i>
+                        <strong>Recommended Profession:</strong>{{ profession_display_name }}
+                        <span class="ms-2">-Clinics with {{ profession_display_name }}s are highlighted and shown first</span>
+                    </div>
+                {% endif %}
+                
+                <div class="search-container">
+                    <form method="GET" class="search-form">
+                        <input type="hidden" name="patient_id" value="{{ patient_id }}">
+                        <input type="hidden" name="selected_sections" value="{{ selected_sections|join:',' }}">
+                        <select class="search-dropdown" name="center_type">
+                            <option value="">Choose Healthcare Center</option>
+                            <option value="public" {% if center_type == 'public' %}selected{% endif %}>Public</option>
+                            <option value="private" {% if center_type == 'private' %}selected{% endif %}>Private</option>
+                        </select>
+                        <input type="text" class="search-input" name="search" placeholder="Search by name, address, description..." value="{{ search_query }}">
+                        <button type="submit" class="search-btn">Search</button>
+                    </form>
+                </div>
+
+                {% if clinics %}
+                    <div class="results-info">
+                        {% if search_query %}
+                            Found {{ clinics|length }} result{{ clinics|length|pluralize }} for "{{ search_query }}"
+                        {% else %}
+                            Showing {{ clinics|length }} healthcare center{{ clinics|length|pluralize }}
+                        {% endif %}
+                        {% if recommended_clinics_count > 0 %}
+                            <span class="text-success fw-bold ms-2">
+                                ({{ recommended_clinics_count }} with {{ profession_display_name }}{{ recommended_clinics_count|pluralize }})
+                            </span>
+                        {% endif %}
+                    </div>
+
+                    <div id="clinic-list">
+                        {% for clinic in clinics %}
+                            <div class="clinic-card clinic-select{% if clinic.has_recommended_professional %} has-recommended-professional{% endif %}" 
+                                 data-clinic-id="{{ clinic.id }}"
+                                 data-clinic-name="{{ clinic.name }}"
+                                 data-clinic-email="{{ clinic.email|default_if_none:'' }}"
+                                 data-recipient-type="clinic"
+                                 style="{% if clinic.has_recommended_professional %}border: 2px solid #28a745;{% endif %}">
+                                <div class="clinic-icon">
+                                    <img src="{% static 'images/clinic_icon.png' %}" alt="Clinic Icon">
+                                </div>
+                                <div class="clinic-info">
+                                    <h2 class="clinic-name">{{ clinic.name }}</h2>
+                            <span class="clinic-type">{{ clinic.clinic_type|capfirst }}</span>
+                            
+                            {% if clinic.has_recommended_professional %}
+                                <div class="clinic-details" style="color: #28a745; font-weight: bold; font-size: 1.1em;">
+                                    ✓ Has {{ clinic.recommended_professional_count }} {{ profession_display_name }}{{ clinic.recommended_professional_count|pluralize }} on staff
+                                </div>
+                            {% endif %}
+                    
+                            {% if clinic.emergency %}
+                                <div class="clinic-details"><strong>Emergency:</strong> {{ clinic.emergency }}</div>
+                            {% endif %}
+                            
+                            {% if clinic.hours %}
+                                <div class="clinic-details"><strong>Hours:</strong> {{ clinic.hours }}</div>
+                            {% endif %}
+                            
+                            {% if clinic.address %}
+                                <div class="clinic-details"><strong>Address:</strong> {{ clinic.address }}</div>
+                            {% endif %}
+                            
+                            {% if clinic.phone_number %}
+                                <div class="clinic-details"><strong>Phone:</strong> {{ clinic.phone_number }}</div>
+                            {% endif %}
+                            
+                            {% if clinic.email %}
+                                <div class="clinic-details"><strong>Email:</strong> {{ clinic.email }}</div>
+                            {% endif %}
+                            
+                            {% if clinic.website %}
+                                <div class="clinic-details"><strong>Website:</strong> <a href="{{ clinic.website }}">{{ clinic.website }}</a></div>
+                            {% endif %}
+                            
+                            {% if clinic.description %}
+                                <div class="clinic-details"><strong>Description:</strong> {{ clinic.description }}</div>
+                            {% endif %}
+                        </div>
+                        <button class="book-btn" type="button">BOOK</button>
+                    </div>
+                {% endfor %}
+            </div>
         {% else %}
-            Showing all {{ clinics.count }} healthcare center{{ clinics.count|pluralize }}
+            <div class="no-clinics">No healthcare centers found.</div>
         {% endif %}
     </div>
 
-    <div id="clinic-list">
-        {% for clinic in clinics %}
-            <div class="clinic-card clinic-select" 
-                 data-clinic-id="{{ clinic.id }}"
-                 data-clinic-name="{{ clinic.name }}"
-                 data-clinic-email="{{ clinic.email|default_if_none:'' }}">
-                <div class="clinic-icon">
-                    <img src="{% static 'images/clinic_icon.png' %}" alt="Clinic Icon">
-                </div>
-                <div class="clinic-info">
-                    <h2 class="clinic-name">{{ clinic.name }}</h2>
-                    <span class="clinic-type">{{ clinic.clinic_type|capfirst }}</span>
-            
-                    {% if clinic.emergency %}
-                        <div class="clinic-details"><strong>Emergency:</strong> {{ clinic.emergency }}</div>
-                    {% endif %}
-                    
-                    {% if clinic.hours %}
-                        <div class="clinic-details"><strong>Hours:</strong> {{ clinic.hours }}</div>
-                    {% endif %}
-                    
-                    {% if clinic.address %}
-                        <div class="clinic-details"><strong>Address:</strong> {{ clinic.address }}</div>
-                    {% endif %}
-                    
-                    {% if clinic.phone_number %}
-                        <div class="clinic-details"><strong>Phone:</strong> {{ clinic.phone_number }}</div>
-                    {% endif %}
-                    
-                    {% if clinic.email %}
-                        <div class="clinic-details"><strong>Email:</strong> {{ clinic.email }}</div>
-                    {% endif %}
-                    
-                    {% if clinic.website %}
-                        <div class="clinic-details"><strong>Website:</strong> <a href="{{ clinic.website }}">{{ clinic.website }}</a></div>
-                    {% endif %}
-                    
-                    {% if clinic.description %}
-                        <div class="clinic-details"><strong>Description:</strong> {{ clinic.description }}</div>
-                    {% endif %}
-                </div>
-                <button class="book-btn" type="button">BOOK</button>
+    <!-- Practitioners Tab -->
+    <div class="tab-pane fade" id="practitionersTab" role="tabpanel" aria-labelledby="practitioners-tab">
+        <div class="search-container">
+            <form method="GET" class="search-form" id="practitionerSearchForm">
+                <input type="hidden" name="patient_id" value="{{ patient_id }}">
+                <input type="hidden" name="selected_sections" value="{{ selected_sections|join:',' }}">
+                <select class="search-dropdown" name="profession" onchange="this.form.submit()">
+                    <option value="">All Professions</option>
+                    {% for code, name in professions %}
+                        <option value="{{ code }}" {% if profession_filter == code %}selected{% endif %}>{{ name }}</option>
+                    {% endfor %}
+                </select>
+                <input type="text" class="search-input" name="search" placeholder="Search practitioners..." value="{{ search_query }}">
+                <button type="submit" class="search-btn">Search</button>
+            </form>
+        </div>
+
+        {% if practitioners %}
+            <div class="results-info">
+                Showing {{ practitioners.count }} practitioner{{ practitioners.count|pluralize }}
+                {% if profession_filter %} in selected profession{% endif %}
             </div>
-        {% endfor %}
+
+            <div id="practitioner-list">
+                {% for profile in practitioners %}
+                    <div class="clinic-card practitioner-card"
+                         data-practitioner-id="{{ profile.user.id }}"
+                         data-practitioner-name="{{ profile.user.get_full_name|default:profile.user.username }}"
+                         data-recipient-type="practitioner">
+                        <div class="clinic-icon">
+                            {% if profile.profile_picture %}
+                                <img src="{{ profile.profile_picture.url }}" alt="{{ profile.user.get_full_name }}" style="border-radius: 50%; object-fit: cover;">
+                            {% else %}
+                                <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center"
+                                     style="width: 100%; height: 100%; font-size: 36px;">
+                                    {{ profile.user.first_name|slice:":1"|upper }}{{ profile.user.last_name|slice:":1"|upper }}
+                                </div>
+                            {% endif %}
+                        </div>
+                        <div class="clinic-info">
+                            <h2 class="clinic-name">{{ profile.user.get_full_name|default:profile.user.username }}</h2>
+                            <span class="clinic-type">{{ profile.get_profession_display }}</span>
+                            
+                            {% if profile.availability_status == 'available' %}
+                                <div class="clinic-details"><strong>Status:</strong> <span class="text-success">Available</span></div>
+                            {% elif profile.availability_status == 'busy' %}
+                                <div class="clinic-details"><strong>Status:</strong> <span class="text-warning">Busy</span></div>
+                            {% endif %}
+                            
+                            {% if profile.specialization %}
+                                <div class="clinic-details"><strong>Specialization:</strong> {{ profile.specialization }}</div>
+                            {% endif %}
+                            
+                            {% if profile.affiliated_facility %}
+                                <div class="clinic-details"><strong>Facility:</strong> {{ profile.affiliated_facility.name }}</div>
+                            {% endif %}
+                            
+                            {% if profile.address %}
+                                <div class="clinic-details"><strong>Address:</strong> {{ profile.address }}</div>
+                            {% endif %}
+                            
+                            {% if profile.phone_number %}
+                                <div class="clinic-details"><strong>Phone:</strong> {{ profile.phone_number }}</div>
+                            {% endif %}
+                            
+                            {% if profile.consultation_details %}
+                                <div class="clinic-details"><strong>Details:</strong> {{ profile.consultation_details }}</div>
+                            {% endif %}
+                        </div>
+                        <button class="book-btn book-practitioner-btn" type="button">REFER</button>
+                    </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <div class="no-clinics">
+                <i class="fas fa-user-md fa-3x text-muted mb-3"></i>
+                <p>No practitioners found accepting referrals.</p>
+                {% if profession_filter %}
+                    <small class="text-muted">Try selecting a different profession or clear the filter.</small>
+                {% endif %}
+            </div>
+        {% endif %}
     </div>
+</div>
+    </div><!-- /.card-body -->
+</div><!-- /.card -->
 
-
-
-    <!-- Modal -->
-    <div class="modal fade" id="bookingModal" tabindex="-1" aria-labelledby="bookingModalLabel" aria-hidden="true">
-      <div class="modal-dialog">
-        <form method="post" id="bookingForm">
-            {% csrf_token %}
-            <input type="hidden" name="patient_id" value="{{ patient_id }}">
-            <input type="hidden" name="selected_sections" value="{{ selected_sections|join:',' }}">
-            <input type="hidden" name="clinic_id" id="modal_clinic_id">
-            <div class="modal-content">
-              <div class="modal-header">
-                <h5 class="modal-title" id="bookingModalLabel">Book Appointment</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-              </div>
-              <div class="modal-body">
-                <div id="modalClinicName" class="mb-2"></div>
-                <div class="mb-2">
-                    <label for="appointment_date">Date:</label>
-                    <input type="date" name="appointment_date" id="appointment_date" required>
-                </div>
-                <div class="mb-2">
-                    <label for="appointment_time">Time:</label>
-                    <input type="time" name="appointment_time" id="appointment_time" required>
-                </div>
-              </div>
-              <div class="modal-footer">
-                <button type="submit" class="book-btn">Refer/Book</button>
-              </div>
+<!-- Booking Modal for Clinics -->
+<div class="modal fade" id="bookingModal" tabindex="-1" aria-labelledby="bookingModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <form method="post" id="bookingForm">
+        {% csrf_token %}
+        <input type="hidden" name="patient_id" value="{{ patient_id }}">
+        <input type="hidden" name="selected_sections" value="{{ selected_sections|join:',' }}">
+        <input type="hidden" name="clinic_id" id="modal_clinic_id">
+        <input type="hidden" name="recipient_type" id="modal_recipient_type" value="clinic">
+        <input type="hidden" name="practitioner_id" id="modal_practitioner_id">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="bookingModalLabel">Book Appointment</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body">
+            <div id="modalRecipientName" class="mb-3 fw-bold"></div>
+            
+            {% if appointment_datetime %}
+            <div class="alert alert-info mb-3" style="border-left: 4px solid #0dcaf0;">
+                <h6 class="mb-2" style="color: #055160;">
+                    <i class="fas fa-calendar-check me-2"></i>Suggested Appointment
+                </h6>
+                <div id="appointmentDisplay" class="fw-bold" style="color: #055160; font-size: 1.05rem;"></div>
+                <button type="button" class="btn btn-sm btn-outline-info mt-2" onclick="toggleAppointmentEdit()" style="font-size: 0.875rem;">
+                    <i class="fas fa-edit me-1"></i>Change Date/Time
+                </button>
             </div>
-        </form>
+            
+            <div id="appointmentEditSection" style="display: none;">
+                <div class="mb-3">
+                    <label for="appointment_date" class="form-label fw-semibold">
+                        <i class="fas fa-calendar me-2"></i>Date:
+                    </label>
+                    <input type="date" class="form-control" name="appointment_date" id="appointment_date" required 
+                           style="border: 2px solid #e9ecef; border-radius: 8px; padding: 12px;">
+                </div>
+                <div class="mb-3">
+                    <label for="appointment_time" class="form-label fw-semibold">
+                        <i class="fas fa-clock me-2"></i>Time:
+                    </label>
+                    <select class="form-control" name="appointment_time" id="appointment_time" required
+                            style="border: 2px solid #e9ecef; border-radius: 8px; padding: 12px;">
+                        <option value="">Select a time...</option>
+                    </select>
+                    <input type="hidden" id="appointment_time_hidden">
+                </div>
+                <button type="button" class="btn btn-success mb-3" onclick="confirmAppointmentChange()" 
+                        style="border-radius: 8px; padding: 10px 20px; font-weight: 600;">
+                    <i class="fas fa-check me-2"></i>Confirm Changes
+                </button>
+            </div>
+            {% else %}
+            <div class="mb-3">
+                <label for="appointment_date" class="form-label fw-semibold">
+                    <i class="fas fa-calendar me-2"></i>Date:
+                </label>
+                <input type="date" class="form-control" name="appointment_date" id="appointment_date" required
+                       style="border: 2px solid #e9ecef; border-radius: 8px; padding: 12px;">
+            </div>
+            <div class="mb-3">
+                <label for="appointment_time" class="form-label fw-semibold">
+                    <i class="fas fa-clock me-2"></i>Time:
+                </label>
+                <select class="form-control" name="appointment_time" id="appointment_time" required
+                        style="border: 2px solid #e9ecef; border-radius: 8px; padding: 12px;">
+                    <option value="">Select a time...</option>
+                </select>
+                <input type="hidden" id="appointment_time_hidden">
+            </div>
+            {% endif %}
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+            <button type="submit" class="book-btn">
+                <i class="fas fa-paper-plane"></i> Refer/Book
+            </button>
+          </div>
+        </div>
+    </form>
+  </div>
+</div>
+
+<!-- Loading Modal -->
+<div class="modal fade" id="loadingModal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-body text-center py-5">
+        <div class="spinner-border text-primary mb-3" role="status" style="width: 3rem; height: 3rem;">
+          <span class="visually-hidden">Loading...</span>
+        </div>
+        <h5 class="mb-2">Sending Referral...</h5>
+        <p class="text-muted">Please wait while we process your referral and send the notification.</p>
       </div>
     </div>
+  </div>
+</div>
 
-    <script>
-    document.addEventListener('DOMContentLoaded', function() {
-        // Auto-dismiss alerts after 5 seconds
-        setTimeout(function() {
-            document.querySelectorAll('.auto-dismiss-alert').forEach(function(alert) {
-                var bsAlert = bootstrap.Alert.getOrCreateInstance(alert);
-                bsAlert.close();
-            });
-        }, 5000);
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Auto-dismiss alerts after 5 seconds
+    setTimeout(function() {
+        document.querySelectorAll('.auto-dismiss-alert').forEach(function(alert) {
+            var bsAlert = bootstrap.Alert.getOrCreateInstance(alert);
+            bsAlert.close();
+        });
+    }, 5000);
 
-        // When a clinic card or BOOK button is clicked
-        document.querySelectorAll('.clinic-card').forEach(function(card) {
-            card.addEventListener('click', function(e) {
-                // Prevent double trigger if button is inside card
-                if (e.target.tagName === 'BUTTON' || e.currentTarget === e.target) {
-                    var clinicId = card.getAttribute('data-clinic-id');
-                    var clinicName = card.getAttribute('data-clinic-name');
-                    document.getElementById('modal_clinic_id').value = clinicId;
-                    document.getElementById('modalClinicName').innerText = clinicName;
-                    // Set form action
-                    document.getElementById('bookingForm').action = "{% url 'refer_patient' 0 %}".replace('0', clinicId);
-                    var bookingModal = new bootstrap.Modal(document.getElementById('bookingModal'));
-                    bookingModal.show();
-                }
-            });
+    // When a clinic card or BOOK button is clicked
+    document.querySelectorAll('.clinic-card').forEach(function(card) {
+        card.addEventListener('click', function(e) {
+            if (e.target.tagName === 'BUTTON' || e.target.closest('.book-btn') || e.currentTarget === e.target) {
+                var clinicId = card.getAttribute('data-clinic-id');
+                var clinicName = card.getAttribute('data-clinic-name');
+                document.getElementById('modal_clinic_id').value = clinicId;
+                document.getElementById('modal_practitioner_id').value = '';
+                document.getElementById('modal_recipient_type').value = 'clinic';
+                document.getElementById('modalRecipientName').innerHTML = '<i class="fas fa-hospital text-primary"></i> ' + clinicName;
+                document.getElementById('bookingModalLabel').innerText = 'Book Appointment - Clinic';
+                // Set form action
+                document.getElementById('bookingForm').action = "{% url 'refer_patient' 0 %}".replace('0', clinicId);
+                // Load working hours for this clinic
+                loadWorkingHours(clinicId, null);
+                var bookingModal = new bootstrap.Modal(document.getElementById('bookingModal'));
+                bookingModal.show();
+            }
         });
     });
-    </script>
-{% else %}
-    <div class="no-clinics">No healthcare centers found.</div>
+    
+    // When a practitioner card or button is clicked
+    document.querySelectorAll('.practitioner-card').forEach(function(card) {
+        card.addEventListener('click', function(e) {
+            if (e.target.tagName === 'BUTTON' || e.target.closest('.book-practitioner-btn') || e.currentTarget === e.target) {
+                var practitionerId = card.getAttribute('data-practitioner-id');
+                var practitionerName = card.getAttribute('data-practitioner-name');
+                document.getElementById('modal_practitioner_id').value = practitionerId;
+                document.getElementById('modal_clinic_id').value = '';
+                document.getElementById('modal_recipient_type').value = 'practitioner';
+                document.getElementById('modalRecipientName').innerHTML = '<i class="fas fa-user-md text-primary"></i> ' + practitionerName;
+                document.getElementById('bookingModalLabel').innerText = 'Refer to Practitioner';
+                // Set form action for practitioner referral
+                document.getElementById('bookingForm').action = "{% url 'refer_to_practitioner' %}";
+                // Load working hours for this practitioner
+                loadWorkingHours(null, practitionerId);
+                var bookingModal = new bootstrap.Modal(document.getElementById('bookingModal'));
+                bookingModal.show();
+            }
+        });
+    });
+    
+    // Switch to practitioners tab if recommended profession is set
+    {% if recommended_profession %}
+    var practitionersTabLink = document.querySelector('a[href="#practitionersTab"]');
+    if (practitionersTabLink) {
+        var tab = new bootstrap.Tab(practitionersTabLink);
+        tab.show();
+    }
+    {% endif %}
+    
+    // Initialize appointment datetime if provided from session
+    {% if appointment_datetime %}
+    initializeAppointmentDateTime('{{ appointment_datetime }}');
+    {% endif %}
+    
+    // Setup date/time restrictions
+    setupDateTimeRestrictions();
+});
+
+// Global variable to store current working hours
+let currentWorkingHours = {
+    working_days: [0, 1, 2, 3, 4], // Default Mon-Fri
+    start_time: '08:00',
+    end_time: '17:00'
+};
+
+// Function to load working hours from API
+function loadWorkingHours(clinicId, practitionerId) {
+    const params = new URLSearchParams();
+    if (clinicId) params.append('clinic_id', clinicId);
+    if (practitionerId) params.append('practitioner_id', practitionerId);
+    
+    console.log('Loading working hours for:', { clinicId, practitionerId });
+    
+    fetch('/api/working-hours/?' + params.toString())
+        .then(response => response.json())
+        .then(data => {
+            console.log('Received working hours:', data);
+            if (!data.error) {
+                currentWorkingHours = data;
+                updateDateTimeInputs();
+            } else {
+                console.error('Error in response:', data.error);
+            }
+        })
+        .catch(error => console.error('Error loading working hours:', error));
+}
+
+// Function to generate time slots
+function generateTimeSlots(startTime, endTime) {
+    const slots = [];
+    const [startHour, startMin] = startTime.split(':').map(Number);
+    const [endHour, endMin] = endTime.split(':').map(Number);
+    
+    console.log('Generating slots - Start:', startTime, 'End:', endTime);
+    
+    // Calculate end time minus 30 minutes for last appointment slot
+    let lastSlotHour = endHour;
+    let lastSlotMin = endMin - 30;
+    if (lastSlotMin < 0) {
+        lastSlotMin = 30;
+        lastSlotHour -= 1;
+    }
+    
+    console.log('Last slot will be at:', `${String(lastSlotHour).padStart(2, '0')}:${String(lastSlotMin).padStart(2, '0')}`);
+    
+    let currentHour = startHour;
+    let currentMin = startMin;
+    
+    while (currentHour < lastSlotHour || (currentHour === lastSlotHour && currentMin <= lastSlotMin)) {
+        const timeStr = `${String(currentHour).padStart(2, '0')}:${String(currentMin).padStart(2, '0')}`;
+        const displayTime = formatTime12Hour(timeStr);
+        slots.push({ value: timeStr, display: displayTime });
+        
+        // Increment by 30 minutes
+        currentMin += 30;
+        if (currentMin >= 60) {
+            currentMin = 0;
+            currentHour += 1;
+        }
+    }
+    
+    return slots;
+}
+
+// Function to format time to 12-hour format
+function formatTime12Hour(time24) {
+    const [hours, minutes] = time24.split(':').map(Number);
+    const period = hours >= 12 ? 'PM' : 'AM';
+    const hours12 = hours % 12 || 12;
+    return `${hours12}:${String(minutes).padStart(2, '0')} ${period}`;
+}
+
+// Function to populate time dropdown
+function populateTimeDropdown() {
+    const timeSelect = document.getElementById('appointment_time');
+    if (!timeSelect) {
+        console.error('Time select element not found');
+        return;
+    }
+    
+    // Clear existing options except the first one
+    timeSelect.innerHTML = '<option value="">Select a time...</option>';
+    
+    // Generate time slots
+    const slots = generateTimeSlots(currentWorkingHours.start_time, currentWorkingHours.end_time);
+    
+    console.log('Generated', slots.length, 'time slots from', currentWorkingHours.start_time, 'to', currentWorkingHours.end_time);
+    
+    // Add slots to dropdown
+    slots.forEach(slot => {
+        const option = document.createElement('option');
+        option.value = slot.value;
+        option.textContent = slot.display;
+        timeSelect.appendChild(option);
+    });
+}
+
+// Function to update date/time inputs based on working hours
+function updateDateTimeInputs() {
+    const dateInput = document.getElementById('appointment_date');
+    const timeInput = document.getElementById('appointment_time');
+    
+    if (dateInput) {
+        // Set min date to tomorrow
+        const tomorrow = new Date();
+        tomorrow.setDate(tomorrow.getDate() + 1);
+        dateInput.min = tomorrow.toISOString().split('T')[0];
+        
+        // Set max date to 3 months from now
+        const maxDate = new Date();
+        maxDate.setMonth(maxDate.getMonth() + 3);
+        dateInput.max = maxDate.toISOString().split('T')[0];
+        
+        // Remove old event listeners by cloning the element
+        const newDateInput = dateInput.cloneNode(true);
+        dateInput.parentNode.replaceChild(newDateInput, dateInput);
+        
+        // Add change event to validate working day
+        newDateInput.addEventListener('change', function() {
+            validateWorkingDay(this);
+        });
+    }
+    
+    // Populate time dropdown with available slots
+    populateTimeDropdown();
+    
+    console.log('Updated working hours:', currentWorkingHours);
+}
+
+// Function to validate if selected date is a working day
+function validateWorkingDay(dateInput) {
+    const selectedDate = new Date(dateInput.value);
+    const dayOfWeek = selectedDate.getDay();
+    
+    // Convert Sunday (0) to 6, Monday (1) to 0, etc.
+    const adjustedDay = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
+    
+    if (!currentWorkingHours.working_days.includes(adjustedDay)) {
+        const dayNames = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+        const workingDayNames = currentWorkingHours.working_days.map(d => dayNames[d]);
+        
+        alert(`Please select a working day. Available days: ${workingDayNames.join(', ')}`);
+        dateInput.value = '';
+    }
+}
+
+// Function to validate if selected time is within working hours
+function validateWorkingTime(timeInput) {
+    if (!timeInput.value) return;
+    
+    const selectedTime = timeInput.value;
+    const startTime = currentWorkingHours.start_time;
+    const endTime = currentWorkingHours.end_time;
+    
+    if (selectedTime < startTime || selectedTime > endTime) {
+        alert(`Please select a time between ${startTime} and ${endTime}. These are the operating hours.`);
+        timeInput.value = '';
+    }
+}
+
+// Setup date/time restrictions
+function setupDateTimeRestrictions() {
+    updateDateTimeInputs();
+}
+
+// Add form submission with AJAX
+document.getElementById('bookingForm')?.addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    const dateInput = document.getElementById('appointment_date');
+    const timeInput = document.getElementById('appointment_time');
+    
+    if (!timeInput || !timeInput.value) {
+        alert('Please select an appointment time.');
+        return false;
+    }
+    
+    if (!dateInput || !dateInput.value) {
+        alert('Please select an appointment date.');
+        return false;
+    }
+    
+    if (dateInput && dateInput.value) {
+        const selectedDate = new Date(dateInput.value);
+        const dayOfWeek = selectedDate.getDay();
+        const adjustedDay = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
+        
+        if (!currentWorkingHours.working_days.includes(adjustedDay)) {
+            alert('Invalid date selected. Please choose a working day.');
+            return false;
+        }
+    }
+    
+    // Close booking modal and show loading modal
+    const bookingModal = bootstrap.Modal.getInstance(document.getElementById('bookingModal'));
+    bookingModal.hide();
+    
+    const loadingModal = new bootstrap.Modal(document.getElementById('loadingModal'));
+    loadingModal.show();
+    
+    // Submit form via AJAX
+    const formData = new FormData(this);
+    const formAction = this.action;
+    
+    fetch(formAction, {
+        method: 'POST',
+        body: formData,
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        loadingModal.hide();
+        
+        if (data.success) {
+            // Show success message
+            alert(`✓ ${data.message}\nReferral Number: ${data.referral_number}`);
+            
+            // Redirect to patient list with sent referrals tab
+            window.location.href = `/patient_list/?tab=sent-referrals`;
+        } else {
+            alert('Error: ' + (data.error || 'Failed to send referral'));
+        }
+    })
+    .catch(error => {
+        loadingModal.hide();
+        console.error('Error:', error);
+        alert('An error occurred while sending the referral. Please try again.');
+    });
+});
+
+{% if appointment_datetime %}
+// Initialize and display the appointment date/time
+function initializeAppointmentDateTime(datetimeStr) {
+    if (!datetimeStr) return;
+    
+    // Check if it includes time (YYYY-MM-DDTHH:MM) or just date (YYYY-MM-DD)
+    const hasTime = datetimeStr.includes('T');
+    
+    if (hasTime) {
+        // Parse the datetime-local format (YYYY-MM-DDTHH:MM)
+        const datetime = new Date(datetimeStr);
+        
+        if (!isNaN(datetime.getTime())) {
+            // Split into date and time
+            const dateStr = datetimeStr.split('T')[0];
+            const timeStr = datetimeStr.split('T')[1];
+            
+            // Set the input values
+            document.getElementById('appointment_date').value = dateStr;
+            document.getElementById('appointment_time').value = timeStr;
+            
+            // Format display
+            const options = { 
+                weekday: 'long', 
+                year: 'numeric', 
+                month: 'long', 
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            };
+            const formattedDate = datetime.toLocaleDateString('en-US', options);
+            
+            // Display the appointment
+            const displayElement = document.getElementById('appointmentDisplay');
+            if (displayElement) {
+                displayElement.innerHTML = formattedDate;
+            }
+        }
+    } else {
+        // Only date provided, set date input and leave time for user to select
+        document.getElementById('appointment_date').value = datetimeStr;
+        
+        // Format date for display
+        const date = new Date(datetimeStr + 'T00:00:00');
+        const options = { 
+            weekday: 'long', 
+            year: 'numeric', 
+            month: 'long', 
+            day: 'numeric'
+        };
+        const formattedDate = date.toLocaleDateString('en-US', options);
+        
+        // Display date with message to select time
+        const displayElement = document.getElementById('appointmentDisplay');
+        if (displayElement) {
+            displayElement.innerHTML = formattedDate + ' <span class="text-muted">(Please select a time below)</span>';
+        }
+        
+        // Show edit section by default when only date is provided
+        const editSection = document.getElementById('appointmentEditSection');
+        const displaySection = editSection.previousElementSibling;
+        if (editSection && displaySection) {
+            editSection.style.display = 'block';
+            displaySection.style.display = 'none';
+        }
+    }
+}
+
+function toggleAppointmentEdit() {
+    const editSection = document.getElementById('appointmentEditSection');
+    const displaySection = editSection.previousElementSibling;
+    
+    if (editSection.style.display === 'none') {
+        editSection.style.display = 'block';
+        displaySection.style.display = 'none';
+    }
+}
+
+function confirmAppointmentChange() {
+    const dateInput = document.getElementById('appointment_date');
+    const timeInput = document.getElementById('appointment_time');
+    
+    if (!dateInput.value || !timeInput.value) {
+        alert('Please select both date and time');
+        return;
+    }
+    
+    // Update the display
+    const datetime = new Date(dateInput.value + 'T' + timeInput.value);
+    const options = { 
+        weekday: 'long', 
+        year: 'numeric', 
+        month: 'long', 
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+    };
+    const formattedDate = datetime.toLocaleDateString('en-US', options);
+    
+    const displayElement = document.getElementById('appointmentDisplay');
+    if (displayElement) {
+        displayElement.innerHTML = formattedDate;
+    }
+    
+    // Hide edit section, show display
+    const editSection = document.getElementById('appointmentEditSection');
+    const displaySection = editSection.previousElementSibling;
+    editSection.style.display = 'none';
+    displaySection.style.display = 'block';
+}
 {% endif %}
+</script>
+
 {% endblock %}

@@ -25,7 +25,17 @@ def create_patient(request):
             
             #validate required fields
             if not all([name, surname, gender, age, parent_name, parent_surname, parent_id, parent_contact]):
-                messages.error(request, 'All fields are required.')
+                missing_fields = []
+                if not name: missing_fields.append('Child First Name')
+                if not surname: missing_fields.append('Child Surname')
+                if not gender: missing_fields.append('Gender')
+                if not age: missing_fields.append('Age')
+                if not parent_name: missing_fields.append('Parent First Name')
+                if not parent_surname: missing_fields.append('Parent Surname')
+                if not parent_id: missing_fields.append('Parent ID Number')
+                if not parent_contact: missing_fields.append('Parent Contact Number')
+                
+                messages.error(request, f'⚠️ Please complete all required fields: {", ".join(missing_fields)}')
                 return render(request, 'patient/create_patient.html', {'show_navbar': True})
             
             #create new patient
@@ -57,7 +67,13 @@ def create_patient(request):
             return redirect('create_patient')  # or wherever you want to redirect
             
         except Exception as e:
-            messages.error(request, f'Error creating patient: {str(e)}')
+            error_msg = str(e)
+            if 'parent_id' in error_msg.lower():
+                messages.error(request, '⚠️ Invalid Parent ID. Please ensure it\'s exactly 13 digits.')
+            elif 'parent_contact' in error_msg.lower():
+                messages.error(request, '⚠️ Invalid Contact Number. Please ensure it\'s exactly 10 digits without spaces.')
+            else:
+                messages.error(request, f'⚠️ Error creating patient: Please check all fields and try again.')
             return render(request, 'patient/create_patient.html', {'show_navbar': True})
     
     #if GET request, render the form
@@ -68,12 +84,17 @@ def patient_list_view(request):
     """View to display all patients created by the current user with search functionality"""
     from referrals.models import Referral
     from assessments.models import DentalScreening, DietaryScreening
-    from django.db.models import Exists, OuterRef
+    from django.db.models import Exists, OuterRef, Q
+    from facility.models import Clinic
+    from userprofile.models import Profile
     
     user = request.user
     
     # Get search query from GET parameters
     search_query = request.GET.get('search', '').strip()
+    
+    # Get recommended profession from session (if coming from report page)
+    recommended_profession = request.session.get('recommended_professional', '')
     
     # Base queryset - only show patients created by the current user
     # Annotate with screening status for display
@@ -103,12 +124,12 @@ def patient_list_view(request):
     
     # Referrals sent by this user
     sent_referrals = Referral.objects.filter(referring_user=user).select_related(
-        'patient', 'receiving_facility', 'referring_facility'
+        'patient', 'receiving_facility', 'referring_facility', 'receiving_practitioner'
     ).order_by('-created_at')
     
-    # Referrals received by this user directly
+    # Referrals received by this user directly or as practitioner
     received_referrals = Referral.objects.filter(
-        receiving_user=user
+        Q(receiving_user=user) | Q(receiving_practitioner=user)
     ).select_related('patient', 'referring_user', 'referring_facility').order_by('-created_at')
     
     # Get all patients with screening status annotations
@@ -120,6 +141,12 @@ def patient_list_view(request):
         has_dietary_screening=Exists(DietaryScreening.objects.filter(patient=OuterRef('pk')))
     ).order_by('-id')[:50]
     
+    # Get clinics for the Clinics tab
+    clinics = Clinic.objects.filter(accepts_referrals=True).order_by('name')
+    
+    # Get available professions for the filter
+    professions = Profile.PROFESSIONS
+    
     context = {
         'patients': page_obj,
         'page_obj': page_obj,
@@ -130,6 +157,9 @@ def patient_list_view(request):
         'sent_referrals': sent_referrals[:10],
         'received_referrals': received_referrals[:10],
         'eligible_patients': eligible_patients,
+        'clinics': clinics,
+        'professions': professions,
+        'recommended_profession': recommended_profession,
         'back_url': '/home/',
     }
     

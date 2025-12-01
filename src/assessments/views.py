@@ -34,7 +34,29 @@ def dental_screening(request, patient_id):
             missing = [field for field in required_fields if not request.POST.get(field)]
             if missing:
                 #show error and re-render form
-                messages.error(request, f"Please answer all required questions: {', '.join(missing)}")
+                field_labels = {
+                    'sa_citizen': 'South African Citizen',
+                    'special_needs': 'Special Needs',
+                    'caregiver_treatment': 'Caregiver Treatment',
+                    'appliance': 'Appliance',
+                    'plaque': 'Plaque',
+                    'dry_mouth': 'Dry Mouth',
+                    'enamel_defects': 'Enamel Defects',
+                    'fluoride_water': 'Fluoride Water',
+                    'fluoride_toothpaste': 'Fluoride Toothpaste',
+                    'topical_fluoride': 'Topical Fluoride',
+                    'regular_checkups': 'Regular Checkups',
+                    'sealed_pits': 'Sealed Pits',
+                    'restorative_procedures': 'Restorative Procedures',
+                    'enamel_change': 'Enamel Change',
+                    'dentin_discoloration': 'Dentin Discoloration',
+                    'white_spot_lesions': 'White Spot Lesions',
+                    'cavitated_lesions': 'Cavitated Lesions',
+                    'multiple_restorations': 'Multiple Restorations',
+                    'missing_teeth': 'Missing Teeth'
+                }
+                missing_labels = [field_labels.get(field, field) for field in missing]
+                messages.error(request, f"⚠️ Please complete all required questions. Missing: {', '.join(missing_labels)}. Scroll through the form to find and answer these questions.")
 
                 # Determine which template to use based on user's profession
                 is_dental_professional = (hasattr(request.user, 'profile') and 
@@ -49,6 +71,9 @@ def dental_screening(request, patient_id):
                     'from_dietary': from_dietary,
                 })
 
+            # Check if this is a save as draft or final submit
+            is_draft = request.POST.get('save_draft') == 'true'
+            
             teeth_fields = {}
 
             for tooth in permanent_upper + permanent_lower + primary_upper + primary_lower:
@@ -61,6 +86,7 @@ def dental_screening(request, patient_id):
             screening, created = DentalScreening.objects.get_or_create(
                 patient=patient,
                 defaults={
+                'is_draft': is_draft,
                 'caregiver_treatment': request.POST.get('caregiver_treatment', ''),
                 'sa_citizen': request.POST.get('sa_citizen', ''),
                 'special_needs': request.POST.get('special_needs', ''),
@@ -96,12 +122,16 @@ def dental_screening(request, patient_id):
                 for field in fields:
                     setattr(screening, field, request.POST.get(field, ''))
                 screening.teeth_data = teeth_fields
+                screening.is_draft = is_draft
                 screening.save()
 
-            if from_dietary:
-                messages.success(request, "Both dietary and dental screenings completed successfully!")
+            if is_draft:
+                messages.success(request, "✓ Draft saved successfully! You can resume this assessment later from the patient list.")
+                return redirect('patient_list')
+            elif from_dietary:
+                messages.success(request, "✓ Both dietary and dental screenings completed successfully!")
             else:
-                messages.success(request, "Dental screening completed successfully!")
+                messages.success(request, "✓ Dental screening completed successfully!")
                 
             return redirect('report', patient_id=patient_id)  #redirects to report page and sends patient_id for identification
 
