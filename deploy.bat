@@ -1,7 +1,7 @@
 @echo off
 setlocal enabledelayedexpansion
 
-echo 🚀 Starting OralSmart deployment...
+echo Starting OralSmart deployment...
 echo.
 
 :: Check if Docker is running
@@ -71,17 +71,17 @@ echo [INFO] Current service status:
 docker-compose ps
 
 echo.
-echo [SUCCESS] 🎉 Deployment completed!
+echo [SUCCESS] Deployment completed!
 echo.
 echo [INFO] Application URLs:
-echo   🌐 Web Application: http://localhost:8000
-echo   📊 Admin Panel: http://localhost:8000/admin
-echo   🔍 API Health Check: http://localhost:8000/health
+echo   Web Application: http://localhost:8000
+echo   Admin Panel: http://localhost:8000/admin
+echo   API Health Check: http://localhost:8000/health
 echo.
 echo [INFO] Useful commands:
-echo   📝 View logs: docker-compose logs -f
-echo   🔄 Restart services: docker-compose restart
-echo   🛑 Stop services: docker-compose down
+echo   View logs: docker-compose logs -f
+echo   Restart services: docker-compose restart
+echo   Stop services: docker-compose down
 echo   🧹 Clean up: docker-compose down -v --rmi all
 echo.
 echo [INFO] For production deployment, use docker-compose-prod.yml

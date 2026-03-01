@@ -56,7 +56,7 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         self.stdout.write(
-            self.style.SUCCESS('🦷 OralSmart Patient Factory Manager\n')
+            self.style.SUCCESS('OralSmart Patient Factory Manager\n')
         )
         
         # Handle cleaning operations
@@ -101,7 +101,7 @@ class Command(BaseCommand):
         }
         
         self.stdout.write(
-            self.style.SUCCESS(f'✅ Successfully created {count} patients with {pattern_description[assessment_pattern]}!')
+            self.style.SUCCESS(f'Successfully created {count} patients with {pattern_description[assessment_pattern]}!')
         )
 
     def show_current_status(self):
@@ -111,7 +111,7 @@ class Command(BaseCommand):
         dietary_count = DietaryScreening.objects.count()
         user_count = User.objects.count()
         
-        self.stdout.write('📊 Current Database Status:')
+        self.stdout.write('Current Database Status:')
         self.stdout.write(f'   Users: {user_count}')
         self.stdout.write(f'   Patients: {patient_count}')
         self.stdout.write(f'   Dental Screenings: {dental_count}')
@@ -137,7 +137,7 @@ class Command(BaseCommand):
     def confirm_creation(self, count):
         """Confirm patient creation with user"""
         self.stdout.write(
-            self.style.WARNING(f'⚠️  About to create {count} patients with complete assessments.')
+            self.style.WARNING(f'About to create {count} patients with complete assessments.')
         )
         self.stdout.write('   Each patient will have:')
         self.stdout.write('   • Patient demographics')
@@ -208,7 +208,7 @@ class Command(BaseCommand):
                         patients.append(patient)
                     created_count += len(patients)
                 
-                self.stdout.write(self.style.SUCCESS(' ✅ Done'))
+                self.stdout.write(self.style.SUCCESS(' Done'))
                 
                 # Show progress
                 progress_percentage = (created_count / total_count) * 100
@@ -216,11 +216,11 @@ class Command(BaseCommand):
                 
         except Exception as e:
             self.stdout.write(
-                self.style.ERROR(f'\n❌ Error creating patients: {str(e)}')
+                self.style.ERROR(f'\nError creating patients: {str(e)}')
             )
             raise CommandError(f'Failed to create patients: {str(e)}')
         
-        self.stdout.write(f'\n🎉 Batch creation completed! Created {created_count} patients.')
+        self.stdout.write(f'\nBatch creation completed! Created {created_count} patients.')
 
     def clean_all_data(self, force=False):
         """Clean all data from database"""
@@ -229,7 +229,7 @@ class Command(BaseCommand):
         
         if not force:
             self.stdout.write(
-                self.style.ERROR('⚠️  WARNING: This will delete ALL data including users!')
+                self.style.ERROR('WARNING: This will delete ALL data including users!')
             )
             self.stdout.write('   This includes:')
             self.stdout.write('   • All patients and assessments')
@@ -251,12 +251,12 @@ class Command(BaseCommand):
                     UserProfile.objects.all().delete()
                 User.objects.all().delete()
                 
-            self.stdout.write(self.style.SUCCESS('✅ All data cleaned successfully!'))
+            self.stdout.write(self.style.SUCCESS('All data cleaned successfully!'))
             self.show_current_status()
             
         except Exception as e:
             self.stdout.write(
-                self.style.ERROR(f'❌ Error cleaning database: {str(e)}')
+                self.style.ERROR(f'Error cleaning database: {str(e)}')
             )
 
     def clean_patient_data(self, force=False):
@@ -266,7 +266,7 @@ class Command(BaseCommand):
         
         if not force:
             self.stdout.write(
-                self.style.WARNING('⚠️  This will delete all patient data but keep users.')
+                self.style.WARNING('This will delete all patient data but keep users.')
             )
             self.stdout.write('   This includes:')
             self.stdout.write('   • All patients')
@@ -286,10 +286,10 @@ class Command(BaseCommand):
                 DietaryScreening.objects.all().delete()
                 Patient.objects.all().delete()
                 
-            self.stdout.write(self.style.SUCCESS('✅ Patient data cleaned successfully!'))
+            self.stdout.write(self.style.SUCCESS('Patient data cleaned successfully!'))
             self.show_current_status()
             
         except Exception as e:
             self.stdout.write(
-                self.style.ERROR(f'❌ Error cleaning patient data: {str(e)}')
+                self.style.ERROR(f'Error cleaning patient data: {str(e)}')
             )

@@ -1,0 +1,23 @@
+<!-- Profession Display Partial -->
+<div class="row" id="profession-section">
+    <div class="col-sm-3">
+        <p class="mb-0">Profession</p>
+    </div>
+    <div class="col-sm-9">
+        <div class="d-flex justify-content-between align-items-center">
+            <p class="text-muted mb-0">{{ profession|default:'No profession provided' }}</p>
+            <button class="btn btn-sm btn-outline-primary" 
+                    hx-get="{% url 'edit_profession' %}" 
+                    hx-target="#profession-section" 
+                    hx-swap="outerHTML"
+                    title="Edit profession">
+                <i class="fas fa-edit"></i> Edit
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Update left panel profession as well -->
+<script>
+    document.getElementById('left-panel-profession').textContent = '{{ profession|default:"No profession provided" }}';
+</script>

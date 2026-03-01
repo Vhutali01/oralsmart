@@ -46,7 +46,7 @@ def analyze_bandit_report():
         print('  ✅ Code base shows good security practices')
         
     except FileNotFoundError:
-        print('⚠️  Bandit report not found. Run static security tests first.')
+        print('Bandit report not found. Run static security tests first.')
     except Exception as e:
         print(f'❌ Error reading Bandit report: {e}')
 

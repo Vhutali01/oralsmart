@@ -1,0 +1,752 @@
+================================================================================
+ORALSMART REFERRAL SYSTEM - TEST PRACTITIONERS
+================================================================================
+Total Practitioners: 72
+Default Password: test123
+All practitioners accept referrals and are affiliated with clinics
+================================================================================
+
+
+================================================================================
+AUDIOLOGIST
+================================================================================
+
+Name: Dr. Nicholas Walker
+Profession: Audiologist
+Username: audiologist_1
+Password: test123
+Affiliated Clinic: Regional Medical Clinic
+Availability: Available
+Accepts Referrals: Yes
+--------------------------------------------------------------------------------
+
+Name: Dr. Rachel Young
+Profession: Audiologist
+Username: audiologist_2
+Password: test123
+Affiliated Clinic: Downtown Wellness Center
+Availability: Available
+Accepts Referrals: Yes
+--------------------------------------------------------------------------------
+
+Name: Dr. Tyler Hall
+Profession: Audiologist
+Username: audiologist_3
+Password: test123
+Affiliated Clinic: Community Health Hub
+Availability: Busy
+Accepts Referrals: Yes
+--------------------------------------------------------------------------------
+
+================================================================================
+BIOKINETICIST
+================================================================================
+
+Name: Dr. Kimberly Jackson
+Profession: Biokineticist
+Username: biokineticist_1
+Password: test123
+Affiliated Clinic: Downtown Wellness Center
+Availability: Available
+Accepts Referrals: Yes
+--------------------------------------------------------------------------------
+
+Name: Dr. Andrew Martin
+Profession: Biokineticist
+Username: biokineticist_2
+Password: test123
+Affiliated Clinic: Community Health Hub
+Availability: Available
+Accepts Referrals: Yes
+--------------------------------------------------------------------------------
+
+Name: Dr. Elizabeth Lee
+Profession: Biokineticist
+Username: biokineticist_3
+Password: test123
+Affiliated Clinic: City General Hospital
+Availability: Busy
+Accepts Referrals: Yes
+--------------------------------------------------------------------------------
+
+================================================================================
+CLINICAL TECHNOLOGIST
+================================================================================
+
+Name: Dr. Joseph Thompson
+Profession: Clinical Technologist
+Username: clinical_technologist_1
+Password: test123
+Affiliated Clinic: Suburban Health Center
+Availability: Available
+Accepts Referrals: Yes
+--------------------------------------------------------------------------------
+
+Name: Dr. Rebecca White
+Profession: Clinical Technologist
+Username: clinical_technologist_2
+Password: test123
+Affiliated Clinic: Regional Medical Clinic
+Availability: Available
+Accepts Referrals: Yes
+--------------------------------------------------------------------------------
+
+Name: Dr. Ryan Harris
+Profession: Clinical Technologist
+Username: clinical_technologist_3
+Password: test123
+Affiliated Clinic: Downtown Wellness Center
+Availability: Busy
+Accepts Referrals: Yes
+--------------------------------------------------------------------------------
+
+================================================================================
+DENTIST
+================================================================================
+
+Name: Dr. James Brown
+Profession: Dentist
+Username: dentist_1
+Password: test123
+Affiliated Clinic: Downtown Wellness Center
+Availability: Available
+Accepts Referrals: Yes
+--------------------------------------------------------------------------------
+
+Name: Dr. Lisa Jones
+Profession: Dentist
+Username: dentist_2
+Password: test123
+Affiliated Clinic: Community Health Hub
+Availability: Available
+Accepts Referrals: Yes
+--------------------------------------------------------------------------------
+
+Name: Dr. Robert Garcia
+Profession: Dentist
+Username: dentist_3
+Password: test123
+Affiliated Clinic: City General Hospital
+Availability: Busy
+Accepts Referrals: Yes
+--------------------------------------------------------------------------------
+
+================================================================================
+DIETITIAN
+================================================================================
+
+Name: Dr. Laura Clark
+Profession: Dietitian
+Username: dietitian_1
+Password: test123
+Affiliated Clinic: Community Health Hub
+Availability: Available
+Accepts Referrals: Yes
+--------------------------------------------------------------------------------
+
+Name: Dr. Jacob Lewis
+Profession: Dietitian
+Username: dietitian_2
+Password: test123
+Affiliated Clinic: City General Hospital
+Availability: Available
+Accepts Referrals: Yes
+--------------------------------------------------------------------------------
+
+Name: Dr. Stephanie Robinson
+Profession: Dietitian
+Username: dietitian_3
+Password: test123
+Affiliated Clinic: Suburban Health Center
+Availability: Busy
+Accepts Referrals: Yes
+--------------------------------------------------------------------------------
+
+================================================================================
+EMERGENCY CARE PRACTITIONER
+================================================================================
+
+Name: Dr. Zachary Scott
+Profession: Emergency Care Practitioner
+Username: emergency_care_practitioner_1
+Password: test123
+Affiliated Clinic: Downtown Wellness Center
+Availability: Available
+Accepts Referrals: Yes
+--------------------------------------------------------------------------------
+
+Name: Dr. Heather Green
+Profession: Emergency Care Practitioner
+Username: emergency_care_practitioner_2
+Password: test123
+Affiliated Clinic: Community Health Hub
+Availability: Available
+Accepts Referrals: Yes
+--------------------------------------------------------------------------------
+
+Name: Dr. Kevin Baker
+Profession: Emergency Care Practitioner
+Username: emergency_care_practitioner_3
+Password: test123
+Affiliated Clinic: City General Hospital
+Availability: Busy
+Accepts Referrals: Yes
+--------------------------------------------------------------------------------
+
+================================================================================
+ENDODONTIST
+================================================================================
+
+Name: Dr. Charles Cooper
+Profession: Endodontist
+Username: endodontist_1
+Password: test123
+Affiliated Clinic: Regional Medical Clinic
+Availability: Available
+Accepts Referrals: Yes
+--------------------------------------------------------------------------------
+
+Name: Dr. Lauren Richardson
+Profession: Endodontist
+Username: endodontist_2
+Password: test123
+Affiliated Clinic: Downtown Wellness Center
+Availability: Available
+Accepts Referrals: Yes
+--------------------------------------------------------------------------------
+
+Name: Dr. Benjamin Cox
+Profession: Endodontist
+Username: endodontist_3
+Password: test123
+Affiliated Clinic: Community Health Hub
+Availability: Busy
+Accepts Referrals: Yes
+--------------------------------------------------------------------------------
+
+================================================================================
+ENROLLED NURSE
+================================================================================
+
+Name: Dr. Brian Mitchell
+Profession: Enrolled Nurse
+Username: enrolled_nurse_1
+Password: test123
+Affiliated Clinic: Community Health Hub
+Availability: Available
+Accepts Referrals: Yes
+--------------------------------------------------------------------------------
+
+Name: Dr. Angela Roberts
+Profession: Enrolled Nurse
+Username: enrolled_nurse_2
+Password: test123
+Affiliated Clinic: City General Hospital
+Availability: Available
+Accepts Referrals: Yes
+--------------------------------------------------------------------------------
+
+Name: Dr. Justin Turner
+Profession: Enrolled Nurse
+Username: enrolled_nurse_3
+Password: test123
+Affiliated Clinic: Suburban Health Center
+Availability: Busy
+Accepts Referrals: Yes
+--------------------------------------------------------------------------------
+
+================================================================================
+MEDICAL DOCTOR
+================================================================================
+
+Name: Dr. Sarah Smith
+Profession: Medical Doctor
+Username: medical_doctor_1
+Password: test123
+Affiliated Clinic: City General Hospital
+Availability: Available
+Accepts Referrals: Yes
+--------------------------------------------------------------------------------
+
+Name: Dr. Michael Johnson
+Profession: Medical Doctor
+Username: medical_doctor_2
+Password: test123
+Affiliated Clinic: Suburban Health Center
+Availability: Available
+Accepts Referrals: Yes
+--------------------------------------------------------------------------------
+
+Name: Dr. Emily Williams
+Profession: Medical Doctor
+Username: medical_doctor_3
+Password: test123
+Affiliated Clinic: Regional Medical Clinic
+Availability: Busy
+Accepts Referrals: Yes
+--------------------------------------------------------------------------------
+
+================================================================================
+MIDWIFE
+================================================================================
+
+Name: Dr. Adam Evans
+Profession: Midwife
+Username: midwife_1
+Password: test123
+Affiliated Clinic: City General Hospital
+Availability: Available
+Accepts Referrals: Yes
+--------------------------------------------------------------------------------
+
+Name: Dr. Janet Edwards
+Profession: Midwife
+Username: midwife_2
+Password: test123
+Affiliated Clinic: Suburban Health Center
+Availability: Available
+Accepts Referrals: Yes
+--------------------------------------------------------------------------------
+
+Name: Dr. Scott Collins
+Profession: Midwife
+Username: midwife_3
+Password: test123
+Affiliated Clinic: Regional Medical Clinic
+Availability: Busy
+Accepts Referrals: Yes
+--------------------------------------------------------------------------------
+
+================================================================================
+NURSING ASSISTANT
+================================================================================
+
+Name: Dr. Christine Phillips
+Profession: Nursing Assistant
+Username: nursing_assistant_1
+Password: test123
+Affiliated Clinic: Regional Medical Clinic
+Availability: Available
+Accepts Referrals: Yes
+--------------------------------------------------------------------------------
+
+Name: Dr. Aaron Campbell
+Profession: Nursing Assistant
+Username: nursing_assistant_2
+Password: test123
+Affiliated Clinic: Downtown Wellness Center
+Availability: Available
+Accepts Referrals: Yes
+--------------------------------------------------------------------------------
+
+Name: Dr. Danielle Parker
+Profession: Nursing Assistant
+Username: nursing_assistant_3
+Password: test123
+Affiliated Clinic: Community Health Hub
+Availability: Busy
+Accepts Referrals: Yes
+--------------------------------------------------------------------------------
+
+================================================================================
+OCCUPATIONAL THERAPIST
+================================================================================
+
+Name: Dr. Matthew Thomas
+Profession: Occupational Therapist
+Username: occupational_therapist_1
+Password: test123
+Affiliated Clinic: City General Hospital
+Availability: Available
+Accepts Referrals: Yes
+--------------------------------------------------------------------------------
+
+Name: Dr. Michelle Taylor
+Profession: Occupational Therapist
+Username: occupational_therapist_2
+Password: test123
+Affiliated Clinic: Suburban Health Center
+Availability: Available
+Accepts Referrals: Yes
+--------------------------------------------------------------------------------
+
+Name: Dr. Joshua Moore
+Profession: Occupational Therapist
+Username: occupational_therapist_3
+Password: test123
+Affiliated Clinic: Regional Medical Clinic
+Availability: Busy
+Accepts Referrals: Yes
+--------------------------------------------------------------------------------
+
+================================================================================
+OPTOMETRIST
+================================================================================
+
+Name: Dr. Nicole Allen
+Profession: Optometrist
+Username: optometrist_1
+Password: test123
+Affiliated Clinic: City General Hospital
+Availability: Available
+Accepts Referrals: Yes
+--------------------------------------------------------------------------------
+
+Name: Dr. Brandon King
+Profession: Optometrist
+Username: optometrist_2
+Password: test123
+Affiliated Clinic: Suburban Health Center
+Availability: Available
+Accepts Referrals: Yes
+--------------------------------------------------------------------------------
+
+Name: Dr. Samantha Wright
+Profession: Optometrist
+Username: optometrist_3
+Password: test123
+Affiliated Clinic: Regional Medical Clinic
+Availability: Busy
+Accepts Referrals: Yes
+--------------------------------------------------------------------------------
+
+================================================================================
+ORAL PATHOLOGIST
+================================================================================
+
+Name: Dr. Sophia Brooks
+Profession: Oral Pathologist
+Username: oral_pathologist_1
+Password: test123
+Affiliated Clinic: Suburban Health Center
+Availability: Available
+Accepts Referrals: Yes
+--------------------------------------------------------------------------------
+
+Name: Dr. Jack Kelly
+Profession: Oral Pathologist
+Username: oral_pathologist_2
+Password: test123
+Affiliated Clinic: Regional Medical Clinic
+Availability: Available
+Accepts Referrals: Yes
+--------------------------------------------------------------------------------
+
+Name: Dr. Sarah Sanders
+Profession: Oral Pathologist
+Username: oral_pathologist_3
+Password: test123
+Affiliated Clinic: Downtown Wellness Center
+Availability: Busy
+Accepts Referrals: Yes
+--------------------------------------------------------------------------------
+
+================================================================================
+ORAL SURGEON
+================================================================================
+
+Name: Dr. Jonathan Reed
+Profession: Oral Surgeon
+Username: oral_surgeon_1
+Password: test123
+Affiliated Clinic: Suburban Health Center
+Availability: Available
+Accepts Referrals: Yes
+--------------------------------------------------------------------------------
+
+Name: Dr. Julie Cook
+Profession: Oral Surgeon
+Username: oral_surgeon_2
+Password: test123
+Affiliated Clinic: Regional Medical Clinic
+Availability: Available
+Accepts Referrals: Yes
+--------------------------------------------------------------------------------
+
+Name: Dr. Thomas Morgan
+Profession: Oral Surgeon
+Username: oral_surgeon_3
+Password: test123
+Affiliated Clinic: Downtown Wellness Center
+Availability: Busy
+Accepts Referrals: Yes
+--------------------------------------------------------------------------------
+
+================================================================================
+ORTHODONTIST
+================================================================================
+
+Name: Dr. Maria Stewart
+Profession: Orthodontist
+Username: orthodontist_1
+Password: test123
+Affiliated Clinic: Downtown Wellness Center
+Availability: Available
+Accepts Referrals: Yes
+--------------------------------------------------------------------------------
+
+Name: Dr. Steven Morris
+Profession: Orthodontist
+Username: orthodontist_2
+Password: test123
+Affiliated Clinic: Community Health Hub
+Availability: Available
+Accepts Referrals: Yes
+--------------------------------------------------------------------------------
+
+Name: Dr. Diana Rogers
+Profession: Orthodontist
+Username: orthodontist_3
+Password: test123
+Affiliated Clinic: City General Hospital
+Availability: Busy
+Accepts Referrals: Yes
+--------------------------------------------------------------------------------
+
+================================================================================
+PEDIATRIC DENTIST
+================================================================================
+
+Name: Dr. Grace Howard
+Profession: Pediatric Dentist
+Username: pediatric_dentist_1
+Password: test123
+Affiliated Clinic: City General Hospital
+Availability: Available
+Accepts Referrals: Yes
+--------------------------------------------------------------------------------
+
+Name: Dr. Samuel Ward
+Profession: Pediatric Dentist
+Username: pediatric_dentist_2
+Password: test123
+Affiliated Clinic: Suburban Health Center
+Availability: Available
+Accepts Referrals: Yes
+--------------------------------------------------------------------------------
+
+Name: Dr. Olivia Peterson
+Profession: Pediatric Dentist
+Username: pediatric_dentist_3
+Password: test123
+Affiliated Clinic: Regional Medical Clinic
+Availability: Busy
+Accepts Referrals: Yes
+--------------------------------------------------------------------------------
+
+================================================================================
+PEDIATRICIAN
+================================================================================
+
+Name: Dr. Michael Price
+Profession: Pediatrician
+Username: pediatrician_1
+Password: test123
+Affiliated Clinic: Community Health Hub
+Availability: Available
+Accepts Referrals: Yes
+--------------------------------------------------------------------------------
+
+Name: Dr. Emily Smith
+Profession: Pediatrician
+Username: pediatrician_2
+Password: test123
+Affiliated Clinic: City General Hospital
+Availability: Available
+Accepts Referrals: Yes
+--------------------------------------------------------------------------------
+
+Name: Dr. James Johnson
+Profession: Pediatrician
+Username: pediatrician_3
+Password: test123
+Affiliated Clinic: Suburban Health Center
+Availability: Busy
+Accepts Referrals: Yes
+--------------------------------------------------------------------------------
+
+================================================================================
+PERIODONTIST
+================================================================================
+
+Name: Dr. Carolyn Bell
+Profession: Periodontist
+Username: periodontist_1
+Password: test123
+Affiliated Clinic: Community Health Hub
+Availability: Available
+Accepts Referrals: Yes
+--------------------------------------------------------------------------------
+
+Name: Dr. Patrick Murphy
+Profession: Periodontist
+Username: periodontist_2
+Password: test123
+Affiliated Clinic: City General Hospital
+Availability: Available
+Accepts Referrals: Yes
+--------------------------------------------------------------------------------
+
+Name: Dr. Victoria Bailey
+Profession: Periodontist
+Username: periodontist_3
+Password: test123
+Affiliated Clinic: Suburban Health Center
+Availability: Busy
+Accepts Referrals: Yes
+--------------------------------------------------------------------------------
+
+================================================================================
+PHYSIOTHERAPIST
+================================================================================
+
+Name: Dr. John Martinez
+Profession: Physiotherapist
+Username: physiotherapist_1
+Password: test123
+Affiliated Clinic: Community Health Hub
+Availability: Available
+Accepts Referrals: Yes
+--------------------------------------------------------------------------------
+
+Name: Dr. Ashley Hernandez
+Profession: Physiotherapist
+Username: physiotherapist_2
+Password: test123
+Affiliated Clinic: City General Hospital
+Availability: Available
+Accepts Referrals: Yes
+--------------------------------------------------------------------------------
+
+Name: Dr. Daniel Lopez
+Profession: Physiotherapist
+Username: physiotherapist_3
+Password: test123
+Affiliated Clinic: Suburban Health Center
+Availability: Busy
+Accepts Referrals: Yes
+--------------------------------------------------------------------------------
+
+================================================================================
+PROSTHODONTIST
+================================================================================
+
+Name: Dr. Nathan Gray
+Profession: Prosthodontist
+Username: prosthodontist_1
+Password: test123
+Affiliated Clinic: Downtown Wellness Center
+Availability: Available
+Accepts Referrals: Yes
+--------------------------------------------------------------------------------
+
+Name: Dr. Emma James
+Profession: Prosthodontist
+Username: prosthodontist_2
+Password: test123
+Affiliated Clinic: Community Health Hub
+Availability: Available
+Accepts Referrals: Yes
+--------------------------------------------------------------------------------
+
+Name: Dr. Alexander Watson
+Profession: Prosthodontist
+Username: prosthodontist_3
+Password: test123
+Affiliated Clinic: City General Hospital
+Availability: Busy
+Accepts Referrals: Yes
+--------------------------------------------------------------------------------
+
+================================================================================
+PSYCHOLOGIST
+================================================================================
+
+Name: Dr. Jennifer Miller
+Profession: Psychologist
+Username: psychologist_1
+Password: test123
+Affiliated Clinic: Suburban Health Center
+Availability: Available
+Accepts Referrals: Yes
+--------------------------------------------------------------------------------
+
+Name: Dr. David Davis
+Profession: Psychologist
+Username: psychologist_2
+Password: test123
+Affiliated Clinic: Regional Medical Clinic
+Availability: Available
+Accepts Referrals: Yes
+--------------------------------------------------------------------------------
+
+Name: Dr. Jessica Rodriguez
+Profession: Psychologist
+Username: psychologist_3
+Password: test123
+Affiliated Clinic: Downtown Wellness Center
+Availability: Busy
+Accepts Referrals: Yes
+--------------------------------------------------------------------------------
+
+================================================================================
+RADIOGRAPHER
+================================================================================
+
+Name: Dr. Amanda Gonzalez
+Profession: Radiographer
+Username: radiographer_1
+Password: test123
+Affiliated Clinic: Regional Medical Clinic
+Availability: Available
+Accepts Referrals: Yes
+--------------------------------------------------------------------------------
+
+Name: Dr. Christopher Wilson
+Profession: Radiographer
+Username: radiographer_2
+Password: test123
+Affiliated Clinic: Downtown Wellness Center
+Availability: Available
+Accepts Referrals: Yes
+--------------------------------------------------------------------------------
+
+Name: Dr. Melissa Anderson
+Profession: Radiographer
+Username: radiographer_3
+Password: test123
+Affiliated Clinic: Community Health Hub
+Availability: Busy
+Accepts Referrals: Yes
+--------------------------------------------------------------------------------
+
+================================================================================
+REGISTERED NURSE
+================================================================================
+
+Name: Dr. Brittany Adams
+Profession: Registered Nurse
+Username: registered_nurse_1
+Password: test123
+Affiliated Clinic: Suburban Health Center
+Availability: Available
+Accepts Referrals: Yes
+--------------------------------------------------------------------------------
+
+Name: Dr. Eric Nelson
+Profession: Registered Nurse
+Username: registered_nurse_2
+Password: test123
+Affiliated Clinic: Regional Medical Clinic
+Availability: Available
+Accepts Referrals: Yes
+--------------------------------------------------------------------------------
+
+Name: Dr. Catherine Carter
+Profession: Registered Nurse
+Username: registered_nurse_3
+Password: test123
+Affiliated Clinic: Downtown Wellness Center
+Availability: Busy
+Accepts Referrals: Yes
+--------------------------------------------------------------------------------

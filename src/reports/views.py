@@ -1,6 +1,6 @@
 from django.shortcuts import render
 from patient.models import Patient
-from django.http import FileResponse, HttpResponse
+from django.http import FileResponse, HttpResponse, JsonResponse
 import io
 from datetime import datetime
 from django.utils import timezone
@@ -21,6 +21,7 @@ from userprofile.models import Profile
 import logging
 import os
 from django.contrib.auth.decorators import login_required
+from django.views.decorators.http import require_POST
 import logging
 import os
 import io
@@ -256,6 +257,8 @@ class CustomPageTemplate:
 @login_required
 def view_report(request, patient_id):
 
+    patient = Patient.objects.get(id=patient_id)
+
     try:
         dental_data = DentalScreening.objects.get(patient_id=patient_id)
     except DentalScreening.DoesNotExist:
@@ -265,6 +268,11 @@ def view_report(request, patient_id):
         dietary_data = DietaryScreening.objects.get(patient_id=patient_id)
     except DietaryScreening.DoesNotExist:
         dietary_data = None
+    
+    # Check if at least one screening exists for referral context
+    if not dental_data and not dietary_data:
+        from django.contrib import messages
+        messages.warning(request, 'This patient needs at least one completed screening before creating a referral.')
 
     ml_prediction = get_ml_risk_prediction(dental_data=dental_data, dietary_data=dietary_data)
     risk_color = get_risk_color(ml_prediction['risk_level'])
@@ -285,6 +293,9 @@ def view_report(request, patient_id):
         "reports/report.html", 
         {
             "patient_id": patient_id,
+            "patient": patient,
+            "dental_screening": dental_data,
+            "dietary_screening": dietary_data,
             'show_navbar': True,
             'risk_prediction': ml_prediction,
             'risk_color': risk_color,
@@ -849,6 +860,37 @@ def send_report_email(request, patient_id):
     except Exception as e:
         logger.error(f"Error sending email: {str(e)}")
         return HttpResponse(f'Error sending email: {str(e)}', status=500)
+
+
+@login_required
+@require_POST
+def save_referral_details(request, patient_id):
+    """Save referral details to session for later use when selecting a clinic"""
+    try:
+        # Get all referral details from the form
+        referral_data = {
+            'patient_id': patient_id,
+            'recommended_professional': request.POST.get('recommended_professional', ''),
+            'urgency': request.POST.get('urgency', ''),
+            'reason': request.POST.get('reason', ''),
+            'clinical_summary': request.POST.get('clinical_summary', ''),
+            'patient_preferences': request.POST.get('patient_preferences', ''),
+            'insurance_information': request.POST.get('insurance_information', ''),
+            'appointment_date': request.POST.get('appointment_date', ''),
+        }
+        
+        # Store in session
+        request.session['referral_details'] = referral_data
+        request.session.modified = True
+        
+        logger.info(f"Saved referral details to session for patient {patient_id}")
+        
+        return JsonResponse({'success': True})
+    
+    except Exception as e:
+        logger.error(f"Error saving referral details: {str(e)}")
+        return JsonResponse({'success': False, 'error': str(e)}, status=500)
+
 
 def generate_pdf_buffer(patient, include_ai_assessment=True, user=None, recommended_professional=''):
     """Generate PDF buffer for email attachment"""

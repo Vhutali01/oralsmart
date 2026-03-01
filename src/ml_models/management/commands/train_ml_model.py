@@ -113,26 +113,26 @@ class Command(BaseCommand):
         
         # Display training configuration
         self.stdout.write(self.style.HTTP_INFO('=' * 60))
-        self.stdout.write(self.style.HTTP_INFO('🚀 ENHANCED ML MODEL TRAINING'))
+        self.stdout.write(self.style.HTTP_INFO('ENHANCED ML MODEL TRAINING'))
         self.stdout.write(self.style.HTTP_INFO('=' * 60))
         self.stdout.write(f'📂 Data file: {csv_file}')
         self.stdout.write(f'🎯 Target column: {target_column}')
-        self.stdout.write(f'🔧 Training mode: {mode_description}')
-        self.stdout.write(f'🎛️  Feature selection: {"✓" if use_feature_selection else "✗"}')
+        self.stdout.write(f'Training mode: {mode_description}')
+        self.stdout.write(f'Feature selection: {"✓" if use_feature_selection else "✗"}')
         if use_feature_selection:
             self.stdout.write(f'   └─ Method: {feature_selection_method}')
             self.stdout.write(f'   └─ Features to select: {n_features}')
-        self.stdout.write(f'⚙️  Hyperparameter tuning: {"✓" if use_hyperparameter_tuning else "✗"}')
-        self.stdout.write('📊 5-Fold cross-validation: ✓ (always enabled)')
+        self.stdout.write(f'Hyperparameter tuning: {"✓" if use_hyperparameter_tuning else "✗"}')
+        self.stdout.write('5-Fold cross-validation: ✓ (always enabled)')
         self.stdout.write('')
         
         if use_hyperparameter_tuning:
             self.stdout.write(
-                self.style.WARNING('⏱️  Hyperparameter tuning enabled - this may take 10-30 minutes...')
+                self.style.WARNING('Hyperparameter tuning enabled - this may take 10-30 minutes...')
             )
         
         self.stdout.write(
-            self.style.WARNING('🔄 Starting model training...')
+            self.style.WARNING('Starting model training...')
         )
         
         try:
@@ -148,18 +148,18 @@ class Command(BaseCommand):
             
             # Display comprehensive results
             self.stdout.write('')
-            self.stdout.write(self.style.SUCCESS('🎉 Model training completed successfully!'))
+            self.stdout.write(self.style.SUCCESS('Model training completed successfully!'))
             self.stdout.write('')
             
             # Basic metrics
-            self.stdout.write(self.style.HTTP_INFO('📊 PERFORMANCE METRICS'))
+            self.stdout.write(self.style.HTTP_INFO('PERFORMANCE METRICS'))
             self.stdout.write('-' * 40)
-            self.stdout.write(f'🏋️  Training accuracy: {results["train_accuracy"]:.4f} ({results["train_accuracy"]*100:.2f}%)')
+            self.stdout.write(f'Training accuracy: {results["train_accuracy"]:.4f} ({results["train_accuracy"]*100:.2f}%)')
             self.stdout.write(f'🧪 Test accuracy: {results["test_accuracy"]:.4f} ({results["test_accuracy"]*100:.2f}%)')
             
             # Cross-validation results
             cv_results = results['cross_validation']
-            self.stdout.write(f'📈 CV mean accuracy: {cv_results["cv_mean"]:.4f} (±{cv_results["cv_std"]*2:.4f})')
+            self.stdout.write(f'CV mean accuracy: {cv_results["cv_mean"]:.4f} (±{cv_results["cv_std"]*2:.4f})')
             self.stdout.write(f'   ├─ Min: {cv_results["cv_min"]:.4f}')
             self.stdout.write(f'   └─ Max: {cv_results["cv_max"]:.4f}')
             
@@ -167,22 +167,22 @@ class Command(BaseCommand):
             self.stdout.write('')
             self.stdout.write(self.style.HTTP_INFO('📁 DATA INFORMATION'))
             self.stdout.write('-' * 40)
-            self.stdout.write(f'📋 Training samples: {results["train_samples"]}')
+            self.stdout.write(f'Training samples: {results["train_samples"]}')
             self.stdout.write(f'🧪 Test samples: {results["test_samples"]}')
             if use_feature_selection and 'original_features' in results:
                 self.stdout.write(f'🔢 Original features: {results["original_features"]}')
-                self.stdout.write(f'✨ Selected features: {results["features_used"]}')
+                self.stdout.write(f'Selected features: {results["features_used"]}')
                 reduction = (1 - results["features_used"] / results["original_features"]) * 100
-                self.stdout.write(f'📉 Feature reduction: {reduction:.1f}%')
+                self.stdout.write(f'Feature reduction: {reduction:.1f}%')
             else:
                 self.stdout.write(f'🔢 Features used: {results["features_used"]}')
             
             # Model information
             self.stdout.write('')
-            self.stdout.write(self.style.HTTP_INFO('🤖 MODEL INFORMATION'))
+            self.stdout.write(self.style.HTTP_INFO('MODEL INFORMATION'))
             self.stdout.write('-' * 40)
             self.stdout.write(f'🧠 Model type: {results["model_type"]}')
-            self.stdout.write(f'🔄 Training iterations: {results["iterations"]}')
+            self.stdout.write(f'Training iterations: {results["iterations"]}')
             
             # Feature selection results
             if use_feature_selection and results.get('selected_features'):
@@ -207,7 +207,7 @@ class Command(BaseCommand):
             # Hyperparameter tuning results
             if use_hyperparameter_tuning and results.get('best_params'):
                 self.stdout.write('')
-                self.stdout.write(self.style.HTTP_INFO('⚙️ HYPERPARAMETER TUNING RESULTS'))
+                self.stdout.write(self.style.HTTP_INFO('HYPERPARAMETER TUNING RESULTS'))
                 self.stdout.write('-' * 40)
                 self.stdout.write('🏆 Best parameters found:')
                 for param, value in results['best_params'].items():
@@ -223,18 +223,18 @@ class Command(BaseCommand):
             
             # Usage recommendations
             self.stdout.write('')
-            self.stdout.write(self.style.HTTP_INFO('💡 RECOMMENDATIONS'))
+            self.stdout.write(self.style.HTTP_INFO('RECOMMENDATIONS'))
             self.stdout.write('-' * 40)
             if cv_results["cv_std"] < 0.02:
-                self.stdout.write('✅ Model shows stable performance across folds')
+                self.stdout.write('Model shows stable performance across folds')
             else:
-                self.stdout.write('⚠️  High variance detected - consider more data or regularization')
+                self.stdout.write('High variance detected - consider more data or regularization')
             
             if use_feature_selection:
-                self.stdout.write('✅ Feature selection reduced model complexity')
+                self.stdout.write('Feature selection reduced model complexity')
             
             if use_hyperparameter_tuning:
-                self.stdout.write('✅ Optimal hyperparameters found via grid search')
+                self.stdout.write('Optimal hyperparameters found via grid search')
             
             # Test prediction capability
             self.stdout.write('')
@@ -294,27 +294,27 @@ class Command(BaseCommand):
                     dietary_data=dummy_dietary
                 )
                 
-                self.stdout.write('✅ Prediction test successful!')
+                self.stdout.write('Prediction test successful!')
                 self.stdout.write(f'   └─ Sample prediction: {prediction_result["risk_level"]} risk')
                 self.stdout.write(f'   └─ Confidence: {prediction_result["confidence"]:.2%}')
                 
             except Exception as e:
-                self.stdout.write(f'⚠️  Prediction test failed: {str(e)}')
+                self.stdout.write(f'Prediction test failed: {str(e)}')
             
             # Final summary
             self.stdout.write('')
             self.stdout.write(self.style.SUCCESS('🎯 TRAINING SUMMARY'))
             self.stdout.write('=' * 60)
-            self.stdout.write(f'✅ Model trained successfully with {results["test_accuracy"]:.2%} test accuracy')
-            self.stdout.write(f'✅ Cross-validation mean: {cv_results["cv_mean"]:.2%}')
+            self.stdout.write(f'Model trained successfully with {results["test_accuracy"]:.2%} test accuracy')
+            self.stdout.write(f'Cross-validation mean: {cv_results["cv_mean"]:.2%}')
             if use_feature_selection:
-                self.stdout.write(f'✅ Feature selection: {results["original_features"]} → {results["features_used"]} features')
+                self.stdout.write(f'Feature selection: {results["original_features"]} → {results["features_used"]} features')
             if use_hyperparameter_tuning:
-                self.stdout.write('✅ Hyperparameters optimized via GridSearchCV')
-            self.stdout.write('✅ Model ready for production use!')
+                self.stdout.write('Hyperparameters optimized via GridSearchCV')
+            self.stdout.write('Model ready for production use!')
             
         except Exception as e:
             self.stdout.write('')
-            self.stdout.write(self.style.ERROR('❌ Training failed!'))
+            self.stdout.write(self.style.ERROR('Training failed!'))
             self.stdout.write(self.style.ERROR(f'Error: {str(e)}'))
             raise CommandError(f'Error training model: {str(e)}')

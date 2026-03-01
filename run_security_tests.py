@@ -138,7 +138,7 @@ def run_security_scan():
             print(f"Running {tool} security scan...")
             run_command(command, capture_output=False)
         else:
-            print(f"⚠️  {tool} not installed. Install with: pip install {tool}")
+            print(f"{tool} not installed. Install with: pip install {tool}")
 
 def main():
     """Main function to parse arguments and run tests."""

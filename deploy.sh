@@ -3,7 +3,7 @@
 # OralSmart Docker Deployment Script
 set -e
 
-echo "🚀 Starting OralSmart deployment..."
+echo "Starting OralSmart deployment..."
 
 # Colors for output
 RED='\033[0;31m'
@@ -119,17 +119,17 @@ if [ ! -z "$failed_services" ]; then
     done
 fi
 
-print_success "🎉 Deployment completed!"
+print_success "Deployment completed!"
 echo ""
 print_status "Application URLs:"
-echo "  🌐 Web Application: http://localhost:8000"
-echo "  📊 Admin Panel: http://localhost:8000/admin"
-echo "  🔍 API Health Check: http://localhost:8000/health"
+echo "  Web Application: http://localhost:8000"
+echo "  Admin Panel: http://localhost:8000/admin"
+echo "  API Health Check: http://localhost:8000/health"
 echo ""
 print_status "Useful commands:"
-echo "  📝 View logs: docker-compose logs -f"
-echo "  🔄 Restart services: docker-compose restart"
-echo "  🛑 Stop services: docker-compose down"
+echo "  View logs: docker-compose logs -f"
+echo "  Restart services: docker-compose restart"
+echo "  Stop services: docker-compose down"
 echo "  🧹 Clean up: docker-compose down -v --rmi all"
 echo ""
 print_status "For production deployment, use docker-compose-prod.yml"

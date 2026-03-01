@@ -31,7 +31,7 @@ logger = logging.getLogger(__name__)
 
 # Check GPU availability
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-logger.info(f"🚀 Using device: {device}")
+logger.info(f"Using device: {device}")
 if torch.cuda.is_available():
     logger.info(f"GPU: {torch.cuda.get_device_name()}")
     logger.info(f"PyTorch version: {torch.__version__}")
@@ -437,7 +437,7 @@ class MLPRiskPredictor:
             import time
             start_time = time.time()
             
-            logger.info("🚀 Starting GPU-accelerated hyperparameter tuning with PyTorch...")
+            logger.info("Starting GPU-accelerated hyperparameter tuning with PyTorch...")
             
             # Convert data to PyTorch tensors
             if hasattr(X_train, 'values'):
@@ -603,10 +603,10 @@ class MLPRiskPredictor:
             total_time = end_time - start_time
             
             logger.info(f"🏁 GPU hyperparameter tuning completed!")
-            logger.info(f"⏱️  Total time: {total_time/3600:.2f} hours ({total_time/60:.1f} minutes)")
+            logger.info(f"Total time: {total_time/3600:.2f} hours ({total_time/60:.1f} minutes)")
             logger.info(f"🎯 Best parameters: {best_params}")
-            logger.info(f"📊 Best CV score: {best_score:.4f}")
-            logger.info(f"🚀 GPU performance: {total_combinations*5/total_time:.2f} models/second")
+            logger.info(f"Best CV score: {best_score:.4f}")
+            logger.info(f"GPU performance: {total_combinations*5/total_time:.2f} models/second")
             
             return best_params, best_model
             
@@ -840,7 +840,7 @@ class MLPRiskPredictor:
             best_params = None
             if use_hyperparameter_tuning:
                 if self.use_gpu:
-                    logger.info("🚀 Using GPU-accelerated hyperparameter tuning...")
+                    logger.info("Using GPU-accelerated hyperparameter tuning...")
                     best_params, best_pytorch_model = self.perform_gpu_hyperparameter_tuning(x_train_scaled, y_train)
                     self.pytorch_model = best_pytorch_model
                     
@@ -990,7 +990,7 @@ class MLPRiskPredictor:
                     outputs = self.pytorch_model(features_tensor)
                     prediction_proba = torch.softmax(outputs, dim=1).cpu().numpy()[0]
                     prediction = prediction_proba.argmax()
-                logger.info("🚀 Using GPU PyTorch model for prediction")
+                logger.info("Using GPU PyTorch model for prediction")
             elif self.model is not None:
                 # Use CPU sklearn model
                 prediction = self.model.predict(features_scaled)[0]

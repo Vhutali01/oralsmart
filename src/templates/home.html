@@ -4,6 +4,19 @@
     {% include "navbar2.html" %}
 {% endblock %}
 
+{% block messages %}
+    {% if messages %}
+        <div class="container">
+            {% for message in messages %}
+                <div class="alert alert-warning alert-dismissible fade show auto-dismiss-alert" role="alert">
+                    <strong>{{ message }}</strong>
+                    <button type="button" class="btn btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            {% endfor %}
+        </div>
+    {% endif %}
+{% endblock %}
+
 {% block content %}
 
 <div class="container">
@@ -13,15 +26,6 @@
             <i class="fas fa-arrow-left"></i> Back
         </a>
     </div> -->
-
-    {% if messages %}
-        {% for message in messages %}
-            <div class="alert alert-warning alert-dismissible fade show auto-dismiss-alert" role="alert">
-                <strong>{{ message }}</strong>
-                <button type="button" class="btn btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-            </div>
-        {% endfor %}
-    {% endif %}
 
     <!-- Welcome Section -->
     <div class="row justify-content-center">
@@ -86,7 +90,7 @@
                 <h6><i class="fas fa-info-circle"></i> Quick Instructions:</h6>
                 <p class="mb-0">
                     <strong>1.</strong> Start by creating a new patient profile using the "Create New Patient" button above.<br>
-                    <strong>2.</strong> Access your patient history through the "History" link in the navigation menu.<br>
+                    <strong>2.</strong> Access patients and referrals through the "Referrals" link in the navigation menu.<br>
                     <strong>3.</strong> Complete both dental and dietary screenings for comprehensive results.<br>
                     <strong>4.</strong> Generate and share professional reports with patients and colleagues.
                 </p>

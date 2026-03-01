@@ -71,7 +71,7 @@ class E2ETestRunner:
     
     def run_tests(self, test_type='all', browser='chromium', headless=False, verbose=False):
         """Run the specified test suite."""
-        print(f"🚀 Running OralSmart E2E Tests - {test_type.upper()}")
+        print(f"Running OralSmart E2E Tests - {test_type.upper()}")
         print(f"Browser: {browser}")
         print(f"Headless: {headless}")
         print("-" * 50)
@@ -107,7 +107,7 @@ class E2ETestRunner:
             test_file = self.test_dir / self.test_suites[test_type]['file']
             cmd.append(str(test_file))
         else:
-            print(f"❌ Unknown test type: {test_type}")
+            print(f"Unknown test type: {test_type}")
             return False
         
         # Add output formatting
@@ -128,14 +128,14 @@ class E2ETestRunner:
                 print("\n✅ All tests passed!")
                 return True
             else:
-                print(f"\n❌ Tests failed with return code: {result.returncode}")
+                print(f"\\nTests failed with return code: {result.returncode}")
                 return False
                 
         except FileNotFoundError:
-            print("❌ Error: pytest not found. Please install pytest: pip install pytest pytest-playwright")
+            print("Error: pytest not found. Please install pytest: pip install pytest pytest-playwright")
             return False
         except Exception as e:
-            print(f"❌ Error running tests: {e}")
+            print(f"Error running tests: {e}")
             return False
     
     def run_custom_tests(self, test_files, browser='chromium', headless=False, verbose=False):

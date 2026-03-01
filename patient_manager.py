@@ -53,7 +53,7 @@ class PatientManager:
         dietary_count = DietaryScreening.objects.count()
         user_count = User.objects.count()
         
-        print('📊 Current Database Status:')
+        print('Current Database Status:')
         print(f'   Users: {user_count}')
         print(f'   Patients: {patient_count}')
         print(f'   Dental Screenings: {dental_count}')
@@ -67,13 +67,13 @@ class PatientManager:
                 response = input('How many patients would you like to create? ')
                 count = int(response)
                 if count < 0:
-                    print('❌ Please enter a positive number.')
+                    print('Please enter a positive number.')
                     continue
                 return count
             except ValueError:
-                print('❌ Please enter a valid number.')
+                print('Please enter a valid number.')
             except KeyboardInterrupt:
-                print('\n⚠️ Operation cancelled.')
+                print('\\nOperation cancelled.')
                 sys.exit(0)
 
     def get_confirmation(self, message="Do you want to continue?"):
@@ -86,14 +86,14 @@ class PatientManager:
                 elif response in ['n', 'no']:
                     return False
                 else:
-                    print('❌ Please enter y or n.')
+                    print('Please enter y or n.')
             except KeyboardInterrupt:
-                print('\n⚠️ Operation cancelled.')
+                print('\\nOperation cancelled.')
                 return False
 
     def confirm_creation(self, count):
         """Confirm patient creation with user"""
-        print(f'⚠️  About to create {count} patients with complete assessments.')
+        print(f'About to create {count} patients with complete assessments.')
         print('   Each patient will have:')
         print('   • Patient demographics')
         print('   • Dental screening (all fields)')
@@ -123,16 +123,16 @@ class PatientManager:
                     patients = PatientWithAssessmentsFactory.create_batch(current_batch_size)
                     created_count += len(patients)
                 
-                print(' ✅ Done')
+                print(' Done')
                 
                 progress_percentage = (created_count / total_count) * 100
                 print(f'Progress: {created_count}/{total_count} ({progress_percentage:.1f}%)')
                 
         except Exception as e:
-            print(f'\n❌ Error creating patients: {str(e)}')
+            print(f'\nError creating patients: {str(e)}')
             return False
         
-        print(f'\n🎉 Batch creation completed! Created {created_count} patients.')
+        print(f'\nBatch creation completed! Created {created_count} patients.')
         return True
 
     def clean_all_data(self, force=False):
@@ -141,7 +141,7 @@ class PatientManager:
         self.show_current_status()
         
         if not force:
-            print('⚠️  WARNING: This will delete ALL data including users!')
+            print('WARNING: This will delete ALL data including users!')
             print('   This includes:')
             print('   • All patients and assessments')
             print('   • All users (including admin users)')
@@ -149,7 +149,7 @@ class PatientManager:
             print()
             
             if not self.get_confirmation():
-                print('⚠️ Database cleaning cancelled.')
+                print('Database cleaning cancelled.')
                 return False
         
         try:
@@ -162,12 +162,12 @@ class PatientManager:
                     UserProfile.objects.all().delete()
                 User.objects.all().delete()
                 
-            print('✅ All data cleaned successfully!')
+            print('All data cleaned successfully!')
             self.show_current_status()
             return True
             
         except Exception as e:
-            print(f'❌ Error cleaning database: {str(e)}')
+            print(f'Error cleaning database: {str(e)}')
             return False
 
     def clean_patient_data(self, force=False):
@@ -176,7 +176,7 @@ class PatientManager:
         self.show_current_status()
         
         if not force:
-            print('⚠️  This will delete all patient data but keep users.')
+            print('This will delete all patient data but keep users.')
             print('   This includes:')
             print('   • All patients')
             print('   • All dental screenings')
@@ -185,7 +185,7 @@ class PatientManager:
             print()
             
             if not self.get_confirmation():
-                print('⚠️ Patient data cleaning cancelled.')
+                print('Patient data cleaning cancelled.')
                 return False
         
         try:
@@ -195,17 +195,17 @@ class PatientManager:
                 DietaryScreening.objects.all().delete()
                 Patient.objects.all().delete()
                 
-            print('✅ Patient data cleaned successfully!')
+            print('Patient data cleaned successfully!')
             self.show_current_status()
             return True
             
         except Exception as e:
-            print(f'❌ Error cleaning patient data: {str(e)}')
+            print(f'Error cleaning patient data: {str(e)}')
             return False
 
     def create_patients(self, count=None, force=False):
         """Main method to create patients"""
-        print('🦷 OralSmart Patient Factory Manager\n')
+        print('OralSmart Patient Factory Manager\n')
         
         # Show current status
         self.show_current_status()
@@ -213,16 +213,16 @@ class PatientManager:
         # Get count if not provided
         if count is None:
             if Patient.objects.count() == 0:
-                print('ℹ️  Database is empty - no existing patients found.')
+                print('Database is empty - no existing patients found.')
             count = self.get_patient_count()
         
         if count == 0:
-            print('✨ No patients to create. Exiting.')
+            print('No patients to create. Exiting.')
             return True
         
         # Confirm creation
         if not force and not self.confirm_creation(count):
-            print('⚠️ Patient creation cancelled.')
+            print('Patient creation cancelled.')
             return False
         
         # Create patients
@@ -232,10 +232,10 @@ class PatientManager:
         if success:
             print('=' * 50)
             self.show_current_status()
-            print(f'✅ Successfully created {count} patients with assessments!')
+            print(f'Successfully created {count} patients with assessments!')
             return True
         else:
-            print('❌ Patient creation failed.')
+            print('Patient creation failed.')
             return False
 
 def parse_arguments():
@@ -307,10 +307,10 @@ def main():
             sys.exit(0 if success else 1)
             
     except KeyboardInterrupt:
-        print('\n⚠️ Operation cancelled by user.')
+        print('\nOperation cancelled by user.')
         sys.exit(1)
     except Exception as e:
-        print(f'❌ Unexpected error: {str(e)}')
+        print(f'Unexpected error: {str(e)}')
         sys.exit(1)
 
 if __name__ == '__main__':

@@ -1,0 +1,46 @@
+<!-- Contact Edit Form Partial -->
+<div id="contact-section">
+    <form hx-post="{% url 'edit_contact' %}" hx-target="#contact-section" hx-swap="outerHTML">
+        {% csrf_token %}
+        <div class="row">
+            <div class="col-sm-3">
+                <p class="mb-0">Phone</p>
+            </div>
+            <div class="col-sm-9">
+                <div class="input-group mb-2">
+                    {{ form.tel }}
+                    <div class="btn-group ms-2" role="group">
+                        <button type="submit" class="btn btn-success btn-sm">
+                            <i class="fas fa-check"></i>
+                            <span class="htmx-indicator">
+                                <i class="fas fa-spinner fa-spin"></i>
+                            </span>
+                        </button>
+                        <button type="button" 
+                                class="btn btn-secondary btn-sm"
+                                hx-get="{% url 'edit_contact' %}?cancel=true" 
+                                hx-target="#contact-section" 
+                                hx-swap="outerHTML">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                </div>
+                {% if form.tel.errors %}
+                    <div class="text-danger small">{{ form.tel.errors.0 }}</div>
+                {% endif %}
+            </div>
+        </div>
+        <hr>
+        <div class="row">
+            <div class="col-sm-3">
+                <p class="mb-0">Address</p>
+            </div>
+            <div class="col-sm-9">
+                {{ form.address }}
+                {% if form.address.errors %}
+                    <div class="text-danger small">{{ form.address.errors.0 }}</div>
+                {% endif %}
+            </div>
+        </div>
+    </form>
+</div>
