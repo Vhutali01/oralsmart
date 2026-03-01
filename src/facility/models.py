@@ -1,4 +1,5 @@
 from django.db import models
+import datetime
 
 # Create your models here.
 
@@ -27,11 +28,11 @@ class Clinic(models.Model):
         help_text="List of working days (0=Monday, 6=Sunday). Default: [0,1,2,3,4] (Mon-Fri)"
     )
     opening_time = models.TimeField(
-        default='08:00',
+        default=datetime.time(8, 0),
         help_text="Clinic opening time"
     )
     closing_time = models.TimeField(
-        default='17:00',
+        default=datetime.time(17, 0),
         help_text="Clinic closing time"
     )
 

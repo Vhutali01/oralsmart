@@ -1,8 +1,13 @@
+from __future__ import annotations
 from django.conf import settings
 from django.db import models
 from django.contrib.auth.models import User
 from django.db import models
+import datetime
 import os
+from typing import TYPE_CHECKING
+if TYPE_CHECKING:
+    from facility.models import Clinic
 
 # Create your models here.
 
@@ -119,13 +124,13 @@ class Profile(models.Model):
         help_text="List of working days (0=Monday, 6=Sunday). Default: [0,1,2,3,4] (Mon-Fri)"
     )
     work_start_time = models.TimeField(
-        default='08:00',
+        default=datetime.time(8, 0),
         blank=True,
         null=True,
         help_text="Practitioner's start time"
     )
     work_end_time = models.TimeField(
-        default='17:00',
+        default=datetime.time(17, 0),
         blank=True,
         null=True,
         help_text="Practitioner's end time"

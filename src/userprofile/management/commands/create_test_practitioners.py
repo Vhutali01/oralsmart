@@ -142,14 +142,14 @@ class Command(BaseCommand):
 
                 # Update or create profile
                 profile, profile_created = Profile.objects.get_or_create(user=user)
-                profile.phone_number = practitioner_data['profile']['phone_number']
+                profile.tel = practitioner_data['profile']['phone_number']
                 profile.address = practitioner_data['profile']['address']
-                profile.role = practitioner_data['profile']['role']
+                profile.profession = practitioner_data['profile']['role']
                 profile.specialization = practitioner_data['profile']['specialization']
                 profile.accepts_referrals = practitioner_data['profile']['accepts_referrals']
                 profile.availability_status = practitioner_data['profile']['availability_status']
                 profile.consultation_details = practitioner_data['profile']['consultation_details']
-                profile.affiliated_facility = clinic
+                profile.affiliated_facility = clinic  # type: ignore[assignment]
                 profile.save()
 
                 created_users.append({
