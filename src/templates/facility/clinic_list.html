@@ -330,13 +330,18 @@
                     <form method="GET" class="search-form">
                         <input type="hidden" name="patient_id" value="{{ patient_id }}">
                         <input type="hidden" name="selected_sections" value="{{ selected_sections|join:',' }}">
-                        <select class="search-dropdown" name="center_type">
-                            <option value="">Choose Healthcare Center</option>
-                            <option value="public" {% if center_type == 'public' %}selected{% endif %}>Public</option>
-                            <option value="private" {% if center_type == 'private' %}selected{% endif %}>Private</option>
+                        <select class="search-dropdown" name="center_type" onchange="this.form.submit()">
+                            <option value="">All Healthcare Centers</option>
+                            <option value="public" {% if center_type == 'public' %}selected{% endif %}>Public Centers Only</option>
+                            <option value="private" {% if center_type == 'private' %}selected{% endif %}>Private Centers Only</option>
                         </select>
                         <input type="text" class="search-input" name="search" placeholder="Search by name, address, description..." value="{{ search_query }}">
                         <button type="submit" class="search-btn">Search</button>
+                        {% if center_type or search_query %}
+                            <a href="?patient_id={{ patient_id }}&selected_sections={{ selected_sections|join:',' }}" class="btn btn-outline-secondary" style="padding: 12px 20px; border-radius: 8px; text-decoration: none;">
+                                <i class="fas fa-times"></i> Clear Filters
+                            </a>
+                        {% endif %}
                     </form>
                 </div>
 
@@ -426,6 +431,11 @@
                 </select>
                 <input type="text" class="search-input" name="search" placeholder="Search practitioners..." value="{{ search_query }}">
                 <button type="submit" class="search-btn">Search</button>
+                {% if profession_filter or search_query %}
+                    <a href="?patient_id={{ patient_id }}&selected_sections={{ selected_sections|join:',' }}" class="btn btn-outline-secondary" style="padding: 12px 20px; border-radius: 8px; text-decoration: none;">
+                        <i class="fas fa-times"></i> Clear Filters
+                    </a>
+                {% endif %}
             </form>
         </div>
 

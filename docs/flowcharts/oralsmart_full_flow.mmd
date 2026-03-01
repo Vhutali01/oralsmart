@@ -1,0 +1,103 @@
+flowchart TD
+    A[Landing Page /] --> B{Choose path}
+    B -->|Tips and Advice| T1[Tips List Public]
+    T1 --> T2[Read categorized health tips]
+    T2 --> A
+
+    B -->|Use as Health Professional| C[Login Page]
+    B -->|Register| R1[Registration Page]
+
+    R1 --> R2[Submit registration form]
+    R2 --> R3[Account created inactive + profile created]
+    R3 --> R4[Activation email sent]
+    R4 --> R5{User clicks activation link?}
+    R5 -->|Yes valid token| R6[Account activated + auto login]
+    R6 --> P1[Create Patient Page]
+    R5 -->|No or invalid| C
+
+    C --> C1{Credentials valid?}
+    C1 -->|No| C2[Show error stay on login]
+    C2 --> C
+    C1 -->|Yes| H[Home Page]
+
+    C --> F1[Forgot password]
+    F1 --> F2[Reset email request]
+    F2 --> F3[Reset link]
+    F3 --> C
+
+    H --> P1
+
+    P1 --> P2[Enter child + guardian details]
+    P2 --> P3{Screening selection}
+
+    P3 -->|Dental only| D1[Dental Screening]
+    P3 -->|Dietary only| DI1[Dietary Screening]
+    P3 -->|Both| DI1
+
+    DI1 --> DI2{perform both?}
+    DI2 -->|Yes| D1
+    DI2 -->|No| REP[Referral Report]
+
+    D1 --> D2{Save draft?}
+    D2 -->|Yes| PL[Patient List / Referrals Hub]
+    D2 -->|No| REP
+
+    REP --> REP1[View patient + screening summary]
+    REP1 --> REP2[ML risk prediction preview]
+    REP2 --> REP3[Generate/preview PDF]
+    REP3 --> REP4[Optional send report email]
+    REP4 --> REP5[Complete referral details]
+    REP5 --> REP6[Proceed to booking]
+
+    REP6 --> CL[Clinics / Practitioners Selection]
+    CL --> CL1{Choose destination}
+
+    CL1 -->|Clinic| RC1[Create clinic referral]
+    CL1 -->|Practitioner| RP1[Create practitioner referral]
+
+    RC1 --> RC2[Validate appointment slot]
+    RC2 --> RC3[Create referral record]
+    RC3 --> RC4[Send clinic email + attach PDF]
+    RC4 --> PL
+
+    RP1 --> RP2[Validate appointment slot]
+    RP2 --> RP3[Create referral record]
+    RP3 --> RP4[Create in-app notification]
+    RP4 --> PL
+
+    PL --> PL1[Patients tab]
+    PL --> PL2[Sent Referrals tab]
+    PL --> PL3[Received Referrals tab]
+
+    PL1 --> D1
+    PL1 --> DI1
+    PL1 --> REP
+
+    PL2 --> RD[Referral Detail]
+    PL3 --> RD
+
+    RD --> RD1[View timeline status details]
+    RD1 --> RD2[Add comments]
+    RD2 --> RD3{Receiver updates status?}
+    RD3 -->|Yes| RD4[Status: acknowledged/in-progress/completed]
+    RD3 -->|No| RD5[No change]
+    RD4 --> END1[Referral lifecycle continues]
+    RD5 --> END1
+
+    RP4 --> N1[Notification bell updates]
+    N1 --> N2[Notifications page]
+    N2 --> RD
+
+    PL2 --> PDFR[Download referral PDF]
+    PL3 --> PDFR
+
+    EXT1[External public referral portal token URL] --> EXT2[View referral no login]
+    EXT2 --> EXT3{Acknowledge?}
+    EXT3 -->|Yes| EXT4[Status updated to acknowledged]
+    EXT3 -->|No| EXT5[View only]
+
+    H --> PR1[Profile drawer]
+    PR1 --> PR2[View/edit profile]
+    PR1 --> PR3[Change password]
+    PR1 --> PR4[Logout]
+    PR4 --> C
