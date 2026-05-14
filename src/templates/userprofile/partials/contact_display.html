@@ -1,0 +1,34 @@
+<!-- Contact Display Partial -->
+<div id="contact-section">
+    <div class="row">
+        <div class="col-sm-3">
+            <p class="mb-0">Phone</p>
+        </div>
+        <div class="col-sm-8">
+            <p class="text-muted mb-0">{{ phone|default:'No phone number provided' }}</p>
+        </div>
+        <div class="col-sm-1">
+            <button class="btn btn-link btn-sm p-0" 
+                    hx-get="{% url 'edit_contact' %}" 
+                    hx-target="#contact-section" 
+                    hx-swap="outerHTML"
+                    title="Edit contact">
+                <i class="fas fa-edit text-muted"></i>
+            </button>
+        </div>
+    </div>
+    <hr>
+    <div class="row">
+        <div class="col-sm-3">
+            <p class="mb-0">Address</p>
+        </div>
+        <div class="col-sm-9">
+            <p class="text-muted mb-0">{{ address|default:'No address provided' }}</p>
+        </div>
+    </div>
+</div>
+
+<!-- Update left panel address as well -->
+<script>
+    document.getElementById('left-panel-address').textContent = '{{ address|default:"No address provided" }}';
+</script>

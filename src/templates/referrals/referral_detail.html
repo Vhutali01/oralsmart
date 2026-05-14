@@ -1,0 +1,339 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Referral {{ referral.referral_number }} - OralSmart{% endblock %}
+
+{% block navbar %}
+    {% include "navbar2.html" %}
+{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-md-12">
+            <!-- Header -->
+            <div class="mb-3">
+                <a href="{% url 'patient_list' %}" class="btn btn-outline-primary ms-1">
+                    <i class="fas fa-arrow-left"></i> Back
+                </a>
+                {% if is_sender and referral.delivery_status == 'failed' %}
+                    <a href="{% url 'referrals:resend' referral.pk %}" class="btn btn-warning ms-2">Retry Send</a>
+                {% endif %}
+            </div>
+
+            {% if messages %}
+                {% for message in messages %}
+                    <div class="alert alert-warning alert-dismissible fade show auto-dismiss-alert" role="alert">
+                        <strong>{{ message }}</strong>
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                {% endfor %}
+            {% endif %}
+            
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div>
+                    <h2>Referral Details</h2>
+                    <p class="text-muted">{{ referral.referral_number }}</p>
+                </div>
+            </div>
+
+            <!-- Status Badges -->
+            <div class="mb-4">
+                <div class="row g-3">
+                    <!-- Urgency Badge -->
+                    <div class="col-md-4">
+                        <div class="card border-0 shadow-sm h-100">
+                            <div class="card-body p-3 bg-{% if referral.urgency == 'emergency' %}danger{% elif referral.urgency == 'urgent' %}warning{% else %}secondary{% endif %} bg-opacity-10">
+                                <div class="d-flex align-items-center">
+                                    <div class="rounded-circle bg-{% if referral.urgency == 'emergency' %}danger{% elif referral.urgency == 'urgent' %}warning{% else %}secondary{% endif %} bg-opacity-25 p-3 me-3">
+                                        <i class="fas fa-{% if referral.urgency == 'emergency' %}exclamation-circle{% elif referral.urgency == 'urgent' %}exclamation-triangle{% else %}clock{% endif %} fa-lg text-{% if referral.urgency == 'emergency' %}danger{% elif referral.urgency == 'urgent' %}warning{% else %}secondary{% endif %}"></i>
+                                    </div>
+                                    <div>
+                                        <div class="text-muted small">Urgency Level</div>
+                                        <div class="fw-bold text-{% if referral.urgency == 'emergency' %}danger{% elif referral.urgency == 'urgent' %}warning{% else %}secondary{% endif %}">{{ referral.get_urgency_display }}</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Status Badge -->
+                    <div class="col-md-4">
+                        <div class="card border-0 shadow-sm h-100">
+                            <div class="card-body p-3 bg-{% if referral.status == 'completed' %}success{% elif referral.status == 'cancelled' %}danger{% elif referral.status == 'acknowledged' %}info{% else %}warning{% endif %} bg-opacity-10">
+                                <div class="d-flex align-items-center">
+                                    <div class="rounded-circle bg-{% if referral.status == 'completed' %}success{% elif referral.status == 'cancelled' %}danger{% elif referral.status == 'acknowledged' %}info{% else %}warning{% endif %} bg-opacity-25 p-3 me-3">
+                                        <i class="fas fa-{% if referral.status == 'completed' %}check-circle{% elif referral.status == 'cancelled' %}times-circle{% elif referral.status == 'acknowledged' %}eye{% else %}hourglass-half{% endif %} fa-lg text-{% if referral.status == 'completed' %}success{% elif referral.status == 'cancelled' %}danger{% elif referral.status == 'acknowledged' %}info{% else %}warning{% endif %}"></i>
+                                    </div>
+                                    <div>
+                                        <div class="text-muted small">Referral Status</div>
+                                        <div class="fw-bold text-{% if referral.status == 'completed' %}success{% elif referral.status == 'cancelled' %}danger{% elif referral.status == 'acknowledged' %}info{% else %}warning{% endif %}">{{ referral.get_status_display }}</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Delivery Badge -->
+                    <div class="col-md-4">
+                        <div class="card border-0 shadow-sm h-100">
+                            <div class="card-body p-3 bg-{% if referral.delivery_status == 'delivered' %}success{% elif referral.delivery_status == 'failed' %}danger{% else %}primary{% endif %} bg-opacity-10">
+                                <div class="d-flex align-items-center">
+                                    <div class="rounded-circle bg-{% if referral.delivery_status == 'delivered' %}success{% elif referral.delivery_status == 'failed' %}danger{% else %}primary{% endif %} bg-opacity-25 p-3 me-3">
+                                        <i class="fas fa-{% if referral.delivery_status == 'delivered' %}check-double{% elif referral.delivery_status == 'failed' %}times{% else %}paper-plane{% endif %} fa-lg text-{% if referral.delivery_status == 'delivered' %}success{% elif referral.delivery_status == 'failed' %}danger{% else %}primary{% endif %}"></i>
+                                    </div>
+                                    <div>
+                                        <div class="text-muted small">Delivery Status</div>
+                                        <div class="fw-bold text-{% if referral.delivery_status == 'delivered' %}success{% elif referral.delivery_status == 'failed' %}danger{% else %}primary{% endif %}">{{ referral.get_delivery_status_display }}</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row">
+                <!-- Left Column -->
+                <div class="col-md-8">
+                    <!-- Patient Information -->
+                    <div class="card mb-3">
+                        <div class="card-header bg-primary text-white">
+                            <h5 class="mb-0">Patient Information</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <p><strong>Name:</strong> {{ referral.patient.name }} {{ referral.patient.surname }}</p>
+                                    <p><strong>Age:</strong> {{ referral.patient.age }} years</p>
+                                    <p><strong>Gender:</strong> {{ referral.patient.get_gender_display }}</p>
+                                </div>
+                                <div class="col-md-6">
+                                    <p><strong>Parent/Guardian:</strong> {{ referral.patient.parent_name }} {{ referral.patient.parent_surname }}</p>
+                                    <p><strong>Contact:</strong> {{ referral.patient.parent_contact }}</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Referral Details -->
+                    <div class="card mb-3">
+                        <div class="card-header bg-primary text-white">
+                            <h5 class="mb-0">Referral Details</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="mb-3">
+                                <strong>Reason for Referral:</strong>
+                                <p>{{ referral.reason }}</p>
+                            </div>
+                            <div class="mb-3">
+                                <strong>Clinical Summary:</strong>
+                                <p>{{ referral.clinical_summary }}</p>
+                            </div>
+                            {% if referral.patient_preferences %}
+                            <div class="mb-3">
+                                <strong>Patient Preferences:</strong>
+                                <p>{{ referral.patient_preferences }}</p>
+                            </div>
+                            {% endif %}
+                            {% if referral.insurance_information %}
+                            <div class="mb-3">
+                                <strong>Insurance Information:</strong>
+                                <p>{{ referral.insurance_information }}</p>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <!-- Comments Section -->
+                    <div class="card mb-3">
+                        <div class="card-header bg-primary text-white">
+                            <h5 class="mb-0">Comments & Communication</h5>
+                        </div>
+                        <div class="card-body">
+                            {% if comments %}
+                                <div class="mb-4" style="max-height: 400px; overflow-y: auto;">
+                                    {% for comment in comments %}
+                                    <div class="mb-3 p-3 rounded {% if comment.is_internal %}bg-primary bg-opacity-10 border-start border-primary border-3{% else %}bg-success bg-opacity-10 border-start border-success border-3{% endif %}">
+                                        <div class="d-flex justify-content-between align-items-start mb-2">
+                                            <div>
+                                                <strong class="{% if comment.is_internal %}text-primary{% else %}text-success{% endif %}">
+                                                    <i class="fas fa-user-circle me-1"></i>
+                                                    {% if comment.author %}{{ comment.author.get_full_name }}{% else %}{{ comment.author_name }}{% endif %}
+                                                </strong>
+                                                <small class="badge bg-{% if comment.is_internal %}primary{% else %}success{% endif %} ms-2">
+                                                    {% if comment.is_internal %}Internal{% else %}External{% endif %}
+                                                </small>
+                                            </div>
+                                            <small class="text-muted">
+                                                <i class="fas fa-clock me-1"></i>
+                                                {{ comment.created_at|date:"M d, Y H:i" }}
+                                            </small>
+                                        </div>
+                                        <p class="mb-0">{{ comment.comment|linebreaks }}</p>
+                                    </div>
+                                    {% endfor %}
+                                </div>
+                            {% else %}
+                                <div class="alert alert-info mb-4">
+                                    <i class="fas fa-info-circle me-2"></i>No comments yet. Be the first to add a comment!
+                                </div>
+                            {% endif %}
+
+                            <hr>
+                            <h6 class="mb-3"><i class="fas fa-comment-dots me-2"></i>Add Comment</h6>
+                            <form method="post">
+                                {% csrf_token %}
+                                <div class="mb-3">
+                                    {{ comment_form.comment }}
+                                    {% if comment_form.comment.errors %}
+                                        <div class="text-danger small mt-1">
+                                            {{ comment_form.comment.errors }}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                                <input type="hidden" name="submit_comment" value="1">
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="fas fa-paper-plane me-2"></i>Post Comment
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Right Column -->
+                <div class="col-md-4">
+                    <!-- Referring Provider -->
+                    <div class="card mb-3">
+                        <div class="card-header bg-primary text-white">
+                            <h6 class="mb-0">Referring Provider</h6>
+                        </div>
+                        <div class="card-body">
+                            <p><strong>Provider:</strong> {{ referral.referring_user.get_full_name }}</p>
+                            <p><strong>Facility:</strong> {{ referral.referring_facility.name }}</p>
+                            {% if referral.referring_facility.phone_number %}
+                            <p><strong>Phone:</strong> {{ referral.referring_facility.phone_number }}</p>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <!-- Receiving Provider -->
+                    <div class="card mb-3">
+                        <div class="card-header bg-primary text-white">
+                            <h6 class="mb-0">Receiving Provider</h6>
+                        </div>
+                        <div class="card-body">
+                            <p><strong>Facility:</strong> {{ referral.receiving_facility.name }}</p>
+                            {% if referral.receiving_facility.address %}
+                            <p><strong>Address:</strong> {{ referral.receiving_facility.address }}</p>
+                            {% endif %}
+                            {% if referral.receiving_facility.phone_number %}
+                            <p><strong>Phone:</strong> {{ referral.receiving_facility.phone_number }}</p>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <!-- Timeline -->
+                    <div class="card mb-3">
+                        <div class="card-header bg-primary text-white">
+                            <h6 class="mb-0">Timeline</h6>
+                        </div>
+                        <div class="card-body">
+                            <ul class="list-unstyled">
+                                <li class="mb-2">
+                                    <i class="fas fa-check-circle text-success"></i>
+                                    <strong>Created:</strong><br>
+                                    <small>{{ referral.created_at|date:"M d, Y H:i" }}</small>
+                                </li>
+                                {% if referral.sent_at %}
+                                <li class="mb-2">
+                                    <i class="fas fa-paper-plane text-primary"></i>
+                                    <strong>Sent:</strong><br>
+                                    <small>{{ referral.sent_at|date:"M d, Y H:i" }}</small>
+                                </li>
+                                {% endif %}
+                                {% if referral.acknowledged_at %}
+                                <li class="mb-2">
+                                    <i class="fas fa-eye text-info"></i>
+                                    <strong>Acknowledged:</strong><br>
+                                    <small>{{ referral.acknowledged_at|date:"M d, Y H:i" }}</small>
+                                </li>
+                                {% endif %}
+                                {% if referral.appointment_date %}
+                                <li class="mb-2">
+                                    <i class="fas fa-calendar text-warning"></i>
+                                    <strong>Appointment:</strong><br>
+                                    <small>{{ referral.appointment_date|date:"M d, Y H:i" }}</small>
+                                </li>
+                                {% endif %}
+                                {% if referral.completed_at %}
+                                <li class="mb-2">
+                                    <i class="fas fa-check-double text-success"></i>
+                                    <strong>Completed:</strong><br>
+                                    <small>{{ referral.completed_at|date:"M d, Y H:i" }}</small>
+                                </li>
+                                {% endif %}
+                            </ul>
+                        </div>
+                    </div>
+
+                    <!-- Status Update (for receivers) -->
+                    {% if is_receiver %}
+                    <div class="card mb-3">
+                        <div class="card-header bg-primary text-white">
+                            <h6 class="mb-0">Update Status</h6>
+                        </div>
+                        <div class="card-body">
+                            <form method="post">
+                                {% csrf_token %}
+                                <div class="mb-3">
+                                    {{ status_form.status }}
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">Appointment Date</label>
+                                    {{ status_form.appointment_date }}
+                                </div>
+                                <button type="submit" name="status" class="btn btn-primary btn-sm w-100">Update Status</button>
+                            </form>
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    <!-- Delivery Information -->
+                    {% if delivery_logs %}
+                    <div class="card mb-3">
+                        <div class="card-header bg-primary text-white">
+                            <h6 class="mb-0">Delivery Logs</h6>
+                        </div>
+                        <div class="card-body">
+                            <ul class="list-unstyled">
+                                {% for log in delivery_logs %}
+                                <li class="mb-2">
+                                    <span class="badge bg-{% if log.status == 'success' %}success{% else %}danger{% endif %}">
+                                        {{ log.get_method_display }}
+                                    </span><br>
+                                    <small>{{ log.attempted_at|date:"M d, Y H:i" }}</small>
+                                </li>
+                                {% endfor %}
+                            </ul>
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Auto-dismiss alerts after 5 seconds
+        setTimeout(function() {
+            document.querySelectorAll('.auto-dismiss-alert').forEach(function(alert) {
+                var bsAlert = bootstrap.Alert.getOrCreateInstance(alert);
+                bsAlert.close();
+            });
+        }, 5000);
+    });
+</script>
+{% endblock %}

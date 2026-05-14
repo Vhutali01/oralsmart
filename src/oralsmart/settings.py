@@ -51,8 +51,10 @@ INSTALLED_APPS = [
     'assessments',
     'reports',
     'facility',
+    'referrals',
     'ml_models',
     'tips.apps.TipsConfig',
+    'notifications',
 
 ]
 

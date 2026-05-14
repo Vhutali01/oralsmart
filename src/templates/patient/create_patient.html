@@ -87,14 +87,22 @@
 
 <!--Div for entering the child's parent or guardian ID-->
         <div class="form-floating mb-3">
-            <input type="text" class="form-control" id="parent_id" name="parent_id" placeholder="Enter Parent ID" required pattern="\d{13}" maxlength="13" title="Please enter a 13-digit South African ID number">
-            <label for="parent_id">Enter the parent's South African ID Number</label>
+            <input type="text" class="form-control" id="parent_id" name="parent_id" placeholder="e.g. 8001015009087" required pattern="\d{13}" maxlength="13" title="Please enter a 13-digit South African ID number">
+            <label for="parent_id">Enter the parent's South African ID Number 
+                <i class="fas fa-question-circle text-muted" data-bs-toggle="tooltip" data-bs-placement="top" 
+                   title="Enter exactly 13 digits (e.g. 8001015009087). This is the parent or guardian's SA ID number." style="font-size: 0.9rem; cursor: help;"></i>
+            </label>
+            <small class="text-muted">Format: 13 digits (example: 8001015009087)</small>
         </div>
 
 <!--Div for entering the child's parent or guardian contact number-->
         <div class="form-floating mb-3">
-            <input type="tel" class="form-control" id="parent_contact" name="parent_contact" placeholder="Enter Parent Contact Number" required pattern="\d{10}" maxlength="10" title="Please enter a 10-digit South African contact number">
-            <label for="parent_contact">Enter the parent's Contact Number</label>
+            <input type="tel" class="form-control" id="parent_contact" name="parent_contact" placeholder="e.g. 0821234567" required pattern="\d{10}" maxlength="10" title="Please enter a 10-digit South African contact number">
+            <label for="parent_contact">Enter the parent's Contact Number
+                <i class="fas fa-question-circle text-muted" data-bs-toggle="tooltip" data-bs-placement="top" 
+                   title="Enter 10-digit mobile number (e.g. 0821234567). No spaces or dashes." style="font-size: 0.9rem; cursor: help;"></i>
+            </label>
+            <small class="text-muted">Format: 10 digits (example: 0821234567)</small>
         </div>
          
         <div class="d-flex justify-content-center mt-4" style="gap: 2rem;">
@@ -112,6 +120,12 @@
                     bsAlert.close();
                 });
             }, 3000); //3 seconds
+            
+            // Initialize Bootstrap tooltips
+            var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+            var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+                return new bootstrap.Tooltip(tooltipTriggerEl);
+            });
         });
 
         function submitAndRedirect(screeningType) {

@@ -1,0 +1,23 @@
+<!-- Name Display Partial -->
+<div class="row" id="name-section">
+    <div class="col-sm-3">
+        <p class="mb-0">Full Name</p>
+    </div>
+    <div class="col-sm-9">
+        <div class="d-flex justify-content-between align-items-center">
+            <p class="text-muted mb-0">{{ first_name|default:'No first name provided' }} {{ last_name|default:'No last name provided' }}</p>
+            <button class="btn btn-sm btn-outline-primary" 
+                    hx-get="{% url 'edit_name' %}" 
+                    hx-target="#name-section" 
+                    hx-swap="outerHTML"
+                    title="Edit name">
+                <i class="fas fa-edit"></i> Edit
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Update left panel name as well -->
+<script>
+    document.getElementById('left-panel-name').textContent = '{{ first_name|default:"No first name provided" }} {{ last_name|default:"No last name provided" }}';
+</script>

@@ -1185,9 +1185,9 @@
                     <div class="accordion-body">
                         <div class="form-section text-center mt-4">
                             {% if perform_both %}
-                                <button type="submit" class="btn btn-primary">Complete Dietary & Proceed to Dental</button>
+                                <button type="submit" class="btn btn-primary" onclick="return confirmSubmit('dietary and proceed to dental screening');">Complete Dietary & Proceed to Dental</button>
                             {% else %}
-                                <button type="submit" class="btn btn-primary">Complete Dietary Screening</button>
+                                <button type="submit" class="btn btn-primary" onclick="return confirmSubmit('dietary screening');">Complete Dietary Screening</button>
                             {% endif %}
                         </div>
                     </div>
@@ -1466,6 +1466,10 @@ function setupExampleModals() {
             }
         });
     });
+}
+
+function confirmSubmit(screeningType) {
+    return confirm(`Are you sure you want to submit this ${screeningType}?\n\nPlease review your answers before submitting. You cannot edit them after submission.`);
 }
 
 function setupFormValidation() {

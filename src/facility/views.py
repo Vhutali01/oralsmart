@@ -2,11 +2,12 @@ from django.shortcuts import render, redirect
 from django.db.models import Q
 from .models import Clinic
 from django.core.mail import EmailMessage
-from django.http import HttpResponse
+from django.http import HttpResponse, JsonResponse
 from reports.views import generate_pdf
 from patient.models import Patient
 import io
 import os
+import json
 from datetime import datetime
 from reportlab.lib.pagesizes import letter
 from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, PageBreak, Table, TableStyle
@@ -17,6 +18,11 @@ from reportlab.lib.units import inch
 from assessments.models import DentalScreening, DietaryScreening
 from django.contrib import messages
 from django.conf import settings
+from referrals.models import Referral
+from django.utils import timezone
+from datetime import timedelta
+from userprofile.models import Profile
+from .appointment_utils import get_working_constraints, format_working_hours
 
 
 
@@ -25,8 +31,17 @@ def clinic_list(request):
     search_query = request.GET.get('search', '')
     center_type = request.GET.get('center_type', '')
     
-    #start with all clinics
-    clinics = Clinic.objects.all()
+    # Get recommended profession from session (set from report page)
+    referral_details = request.session.get('referral_details', {})
+    recommended_profession = referral_details.get('recommended_professional', '')
+    
+    # Use recommended profession as default if no profession filter is explicitly provided
+    profession_filter = request.GET.get('profession', '')
+    if not profession_filter and recommended_profession:
+        profession_filter = recommended_profession
+    
+    #start with all clinics that accept referrals
+    clinics = Clinic.objects.filter(accepts_referrals=True)
     
     #apply center type filter if selected
     if center_type:
@@ -42,12 +57,71 @@ def clinic_list(request):
             Q(email__icontains=search_query)
         )
     
+    # Annotate clinics with recommended profession availability
+    clinics_list = list(clinics)
+    if recommended_profession:
+        for clinic in clinics_list:
+            # Check if clinic has practitioners with the recommended profession
+            clinic.has_recommended_professional = clinic.affiliated_practitioners.filter(
+                profession=recommended_profession,
+                accepts_referrals=True,
+                availability_status__in=['available', 'busy']
+            ).exclude(user=request.user).exists()
+            
+            # Get count of recommended professionals at this clinic
+            clinic.recommended_professional_count = clinic.affiliated_practitioners.filter(
+                profession=recommended_profession,
+                accepts_referrals=True,
+                availability_status__in=['available', 'busy']
+            ).exclude(user=request.user).count()
+    else:
+        # If no recommended profession, set defaults
+        for clinic in clinics_list:
+            clinic.has_recommended_professional = False
+            clinic.recommended_professional_count = 0
+    
+    # Sort clinics: recommended ones first (by count desc), then alphabetically
+    clinics_list.sort(key=lambda c: (-c.recommended_professional_count, c.name.lower()))
+    
+    # Get practitioners who accept referrals (exclude current user)
+    practitioners = Profile.objects.filter(
+        accepts_referrals=True,
+        availability_status__in=['available', 'busy']
+    ).exclude(user=request.user).select_related('user', 'affiliated_facility')
+    
+    # Apply profession filter if provided
+    if profession_filter:
+        practitioners = practitioners.filter(profession=profession_filter)
+    
     patient_id = request.GET.get('patient_id')
     selected_sections = request.GET.get('selected_sections', '').split(',') if request.GET.get('selected_sections') else []
+    
+    # Get available professions for the filter dropdown
+    professions = Profile.PROFESSIONS
+    
+    # Get profession display name if recommended profession exists
+    profession_display_name = None
+    recommended_clinics_count = 0
+    if recommended_profession:
+        profession_dict = dict(Profile.PROFESSIONS)
+        profession_display_name = profession_dict.get(recommended_profession, recommended_profession)
+        # Count clinics with recommended professionals
+        recommended_clinics_count = sum(1 for c in clinics_list if c.has_recommended_professional)
+    
+    # Get appointment date and time from session (set from report page)
+    appointment_datetime = referral_details.get('appointment_date', '')
+    
     context = {
-        'clinics': clinics,
+        'clinics': clinics_list,
+        'practitioners': practitioners,
+        'professions': professions,
+        'recommended_profession': recommended_profession,
+        'profession_display_name': profession_display_name,
+        'recommended_clinics_count': recommended_clinics_count,
+        'appointment_datetime': appointment_datetime,
         'search_query': search_query,
         'center_type': center_type,
+        'profession_filter': profession_filter,
         'patient_id': patient_id,
         'selected_sections': selected_sections,
     }
@@ -427,11 +501,16 @@ def refer_patient(request, clinic_id):
         patient_id = request.POST.get('patient_id')
         if not patient_id:
             return HttpResponse("Missing patient_id", status=400)
+        
+        # Get referral details from session
+        referral_data = request.session.get('referral_details', {})
+        
         selected_sections = request.POST['selected_sections'].split(',')
         appointment_date = request.POST['appointment_date']
         appointment_time = request.POST['appointment_time']
         clinic = Clinic.objects.get(pk=clinic_id)
         patient = Patient.objects.get(pk=patient_id)
+        
         try:
             dental_data = DentalScreening.objects.get(patient_id=patient_id)
         except DentalScreening.DoesNotExist:
@@ -440,20 +519,246 @@ def refer_patient(request, clinic_id):
             dietary_data = DietaryScreening.objects.get(patient_id=patient_id)
         except DietaryScreening.DoesNotExist:
             dietary_data = None
+        
         if not dental_data and not dietary_data:
             messages.error(request, "No screening found for this patient. Please complete at least one screening before referral.")
             return redirect('clinics')
-        pdf_buffer = generate_pdf_buffer(patient, dental_data, dietary_data, selected_sections)
-        # Compose and send email
-        recipient_list = [clinic.email] if clinic.email else []
-        email = EmailMessage(
-            subject=f"Referral for {patient.name} {patient.surname}",
-            body=f"Patient {patient.name} {patient.surname} is referred for an appointment on {appointment_date} at {appointment_time}.",
-            to=recipient_list,
+        
+        # Combine appointment date and time
+        combined_appointment = None
+        if appointment_date and appointment_time:
+            try:
+                appointment_datetime_str = f"{appointment_date} {appointment_time}"
+                combined_appointment = datetime.strptime(appointment_datetime_str, '%Y-%m-%d %H:%M')
+                combined_appointment = timezone.make_aware(combined_appointment)
+                
+                # Validate appointment datetime against clinic's working hours
+                from .appointment_utils import is_valid_appointment_datetime
+                is_valid, error_msg = is_valid_appointment_datetime(combined_appointment, clinic=clinic)
+                if not is_valid:
+                    messages.error(request, f"Invalid appointment time: {error_msg}")
+                    return redirect('clinics')
+            except ValueError:
+                combined_appointment = None
+        
+        # Get referring user's clinic (fallback to receiving clinic if not set)
+        referring_clinic = clinic
+        
+        # Create Referral object with all details
+        referral = Referral.objects.create(
+            patient=patient,
+            dental_screening=dental_data,
+            dietary_screening=dietary_data,
+            referring_user=request.user,
+            referring_facility=referring_clinic,
+            receiving_facility=clinic,
+            reason=referral_data.get('reason', 'Referral from report'),
+            clinical_summary=referral_data.get('clinical_summary', ''),
+            urgency=referral_data.get('urgency', 'routine'),
+            patient_preferences=referral_data.get('patient_preferences', ''),
+            insurance_information=referral_data.get('insurance_information', ''),
+            appointment_date=combined_appointment,
+            status='sent',
+            sent_at=timezone.now(),
+            expires_at=timezone.now() + timedelta(days=30),
+            delivery_method='email',
+            delivery_status='sent'
         )
-        email.attach(f"report_{patient.name}_{patient.surname}.pdf", pdf_buffer.getvalue(), 'application/pdf')
-        email.send()
-        return render(request, 'facility/referral_success.html', {'clinic': clinic})
+        
+        pdf_buffer = generate_pdf_buffer(patient, dental_data, dietary_data, selected_sections)
+        
+        # Compose and send email only if clinic has an email
+        recipient_email = clinic.referral_email or clinic.email
+        if recipient_email:
+            email = EmailMessage(
+                subject=f"Referral #{referral.referral_number} for {patient.name} {patient.surname}",
+                body=f"""Patient {patient.name} {patient.surname} is referred for an appointment on {appointment_date} at {appointment_time}.
+
+Referral Details:
+- Urgency: {referral.urgency.title()}
+- Reason: {referral.reason}
+
+{referral.clinical_summary}
+
+Referral Number: {referral.referral_number}
+""",
+                to=[recipient_email],
+            )
+            email.attach(f"report_{patient.name}_{patient.surname}.pdf", pdf_buffer.getvalue(), 'application/pdf')
+            email.send()
+        
+        # Clear referral details from session after successful creation
+        if 'referral_details' in request.session:
+            del request.session['referral_details']
+        
+        # Return JSON response for AJAX handling
+        return JsonResponse({
+            'success': True,
+            'message': f'Referral sent successfully to {clinic.name}',
+            'referral_number': referral.referral_number,
+            'patient_id': patient.id
+        })
     else:
         return HttpResponse(status=405)
 
+
+def refer_to_practitioner(request):
+    """Refer a patient to an individual practitioner."""
+    from django.contrib.auth.models import User
+    from notifications.models import Notification
+    
+    if request.method != 'POST':
+        return HttpResponse(status=405)
+    
+    patient_id = request.POST.get('patient_id')
+    practitioner_id = request.POST.get('practitioner_id')
+    appointment_date = request.POST.get('appointment_date')
+    appointment_time = request.POST.get('appointment_time')
+    selected_sections = request.POST.get('selected_sections', '').split(',')
+    
+    if not patient_id:
+        return HttpResponse("Missing patient_id", status=400)
+    if not practitioner_id:
+        return HttpResponse("Missing practitioner_id", status=400)
+    
+    try:
+        patient = Patient.objects.get(pk=patient_id)
+    except Patient.DoesNotExist:
+        messages.error(request, "Patient not found.")
+        return redirect('clinics')
+    
+    try:
+        practitioner = User.objects.get(pk=practitioner_id)
+        if not hasattr(practitioner, 'profile') or not practitioner.profile.accepts_referrals:
+            messages.error(request, "This practitioner is not accepting referrals.")
+            return redirect('clinics')
+    except User.DoesNotExist:
+        messages.error(request, "Practitioner not found.")
+        return redirect('clinics')
+    
+    # Get screening data
+    try:
+        dental_data = DentalScreening.objects.get(patient_id=patient_id)
+    except DentalScreening.DoesNotExist:
+        dental_data = None
+    try:
+        dietary_data = DietaryScreening.objects.get(patient_id=patient_id)
+    except DietaryScreening.DoesNotExist:
+        dietary_data = None
+    
+    if not dental_data and not dietary_data:
+        messages.error(request, "No screening found for this patient. Please complete at least one screening before referral.")
+        return redirect('clinics')
+    
+    # Get referral details from session
+    referral_data = request.session.get('referral_details', {})
+    
+    # Combine appointment date and time
+    combined_appointment = None
+    if appointment_date and appointment_time:
+        try:
+            appointment_datetime_str = f"{appointment_date} {appointment_time}"
+            combined_appointment = datetime.strptime(appointment_datetime_str, '%Y-%m-%d %H:%M')
+            combined_appointment = timezone.make_aware(combined_appointment)
+            
+            # Validate appointment datetime against practitioner's working hours
+            from .appointment_utils import is_valid_appointment_datetime
+            is_valid, error_msg = is_valid_appointment_datetime(combined_appointment, practitioner=practitioner)
+            if not is_valid:
+                messages.error(request, f"Invalid appointment time: {error_msg}")
+                return redirect('clinics')
+        except ValueError:
+            combined_appointment = None
+    
+    # Get referring user's facility if any
+    referring_facility = None
+    if hasattr(request.user, 'profile') and request.user.profile.affiliated_facility:
+        referring_facility = request.user.profile.affiliated_facility
+    
+    # Get practitioner's facility if any
+    receiving_facility = None
+    if hasattr(practitioner, 'profile') and practitioner.profile.affiliated_facility:
+        receiving_facility = practitioner.profile.affiliated_facility
+    
+    # Create Referral object
+    referral = Referral.objects.create(
+        referral_type='practitioner',
+        patient=patient,
+        dental_screening=dental_data,
+        dietary_screening=dietary_data,
+        referring_user=request.user,
+        referring_facility=referring_facility,
+        receiving_practitioner=practitioner,
+        receiving_facility=receiving_facility,
+        reason=referral_data.get('reason', 'Referral from report'),
+        clinical_summary=referral_data.get('clinical_summary', ''),
+        urgency=referral_data.get('urgency', 'routine'),
+        recommended_profession=request.session.get('recommended_professional', ''),
+        patient_preferences=referral_data.get('patient_preferences', ''),
+        insurance_information=referral_data.get('insurance_information', ''),
+        appointment_date=combined_appointment,
+        status='sent',
+        sent_at=timezone.now(),
+        expires_at=timezone.now() + timedelta(days=30),
+        delivery_method='internal',
+        delivery_status='delivered'
+    )
+    
+    # Create notification for the practitioner
+    urgency = referral_data.get('urgency', 'routine')
+    if urgency == 'emergency':
+        notification_type = 'emergency_referral'
+    elif urgency == 'urgent':
+        notification_type = 'urgent_referral'
+    else:
+        notification_type = 'new_referral'
+    
+    Notification.objects.create(
+        user=practitioner,
+        notification_type=notification_type,
+        title=f'New Referral: {patient.name} {patient.surname}',
+        message=f'{urgency.title()} referral received from {request.user.get_full_name() or request.user.username}. Patient: {patient.name} {patient.surname}, Age: {patient.age}',
+        referral=referral,
+        action_url=f'/referrals/{referral.id}/'
+    )
+    
+    # Clear referral details from session
+    if 'referral_details' in request.session:
+        del request.session['referral_details']
+    
+    # Return JSON response for AJAX handling
+    return JsonResponse({
+        'success': True,
+        'message': f'Referral sent successfully to {practitioner.user.get_full_name()}',
+        'referral_number': referral.referral_number,
+        'patient_id': patient.id
+    })
+
+
+def get_working_hours_api(request):
+    """
+    API endpoint to get working hours constraints for a clinic or practitioner.
+    Used by frontend to restrict date/time pickers.
+    """
+    clinic_id = request.GET.get('clinic_id')
+    practitioner_id = request.GET.get('practitioner_id')
+    
+    clinic = None
+    practitioner = None
+    
+    try:
+        if clinic_id:
+            clinic = Clinic.objects.get(id=clinic_id)
+        elif practitioner_id:
+            practitioner = Profile.objects.get(id=practitioner_id)
+    except (Clinic.DoesNotExist, Profile.DoesNotExist):
+        return JsonResponse({'error': 'Clinic or practitioner not found'}, status=404)
+    
+    constraints = get_working_constraints(clinic, practitioner)
+    
+    return JsonResponse({
+        'working_days': constraints['working_days'],
+        'start_time': constraints['start_time'].strftime('%H:%M'),
+        'end_time': constraints['end_time'].strftime('%H:%M'),
+        'formatted': format_working_hours(clinic, practitioner)
+    })

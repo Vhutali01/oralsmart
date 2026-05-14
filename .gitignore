@@ -44,3 +44,7 @@ src/userprofile/__pycache__
 
 venv/
 src/db.sqlite3
+src/oralsmart/__pycache__/__init__.cpython-311.pyc
+src/oralsmart/__pycache__/settings.cpython-311.pyc
+src/oralsmart/__pycache__/urls.cpython-311.pyc
+src/patient/__pycache__/models.cpython-311.pyc

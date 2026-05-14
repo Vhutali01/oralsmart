@@ -35,12 +35,122 @@
     {% endfor %}
 {% endif %}
 
+<div class="container">
+    <h1 class="text-center mb-4">Referral Report</h1>
+
+    <!-- Patient Information -->
+    <div class="card mb-3">
+        <div class="card-header bg-primary text-white">
+            <h5 class="mb-0">Patient Information</h5>
+        </div>
+        <div class="card-body">
+            <div class="mb-3">
+                <label class="form-label">Patient Name</label>
+                <input type="text" class="form-control" value="{{ patient.name }} {{ patient.surname }}" readonly>
+            </div>
+            
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label class="form-label">Age</label>
+                    <input type="text" class="form-control" value="{{ patient.age }} years" readonly>
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label class="form-label">Gender</label>
+                    <input type="text" class="form-control" value="{{ patient.get_gender_display }}" readonly>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Screening Forms -->
+    <div class="card mb-3">
+        <div class="card-header bg-primary text-white">
+            <h5 class="mb-0">Screening Assessments</h5>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label class="form-label">Dental Screening</label>
+                    {% if dental_screening %}
+                        <div class="input-group">
+                            <input type="text" class="form-control" value="Completed" readonly>
+                            <a href="{% url 'dental_screening' patient_id=patient.id %}" class="btn btn-outline-primary">View/Update</a>
+                        </div>
+                    {% else %}
+                        <div class="input-group">
+                            <input type="text" class="form-control" value="Not completed" readonly>
+                            <a href="{% url 'dental_screening' patient_id=patient.id %}" class="btn btn-primary">Complete Assessment</a>
+                        </div>
+                    {% endif %}
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label class="form-label">Dietary Screening</label>
+                    {% if dietary_screening %}
+                        <div class="input-group">
+                            <input type="text" class="form-control" value="Completed" readonly>
+                            <a href="{% url 'dietary_screening' patient_id=patient.id %}" class="btn btn-outline-primary">View/Update</a>
+                        </div>
+                    {% else %}
+                        <div class="input-group">
+                            <input type="text" class="form-control" value="Not completed" readonly>
+                            <a href="{% url 'dietary_screening' patient_id=patient.id %}" class="btn btn-primary">Complete Assessment</a>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recommended Professional and Referral Details -->
+    <div class="card mb-3">
+        <div class="card-header bg-primary text-white">
+            <h5 class="mb-0">Referral Details</h5>
+        </div>
+        <div class="card-body">
+            <div class="mb-3">
+                <label for="recommended_professional" class="form-label">Recommended Professional <span class="text-danger">*</span></label>
+                <select class="form-select" id="recommended_professional" name="recommended_professional" required>
+                    <option value="" disabled {% if not current_recommendation_code %}selected{% endif %}>Choose a professional...</option>
+                    {% for prof_code, prof_name in recommended_professionals %}
+                        <option value="{{ prof_code }}" {% if current_recommendation_code == prof_code %}selected{% endif %}>{{ prof_name }}</option>
+                    {% endfor %}
+                </select>
+                <small class="form-text text-muted">Select the type of health professional you recommend for this patient</small>
+            </div>
+            
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label for="urgency" class="form-label">Urgency Level <span class="text-danger">*</span></label>
+                    <select class="form-select" id="urgency" name="urgency" required>
+                        <option value="" disabled selected>Select urgency level...</option>
+                        <option value="routine">Routine</option>
+                        <option value="urgent">Urgent</option>
+                        <option value="emergency">Emergency</option>
+                    </select>
+                </div>
+            </div>
+            
+            <div class="mb-3">
+                <label for="reason" class="form-label">Reason for Referral <span class="text-danger">*</span></label>
+                <textarea id="reason" name="reason" rows="3" class="form-control" required 
+                          placeholder="Describe the primary reason for this referral..."></textarea>
+            </div>
+            
+            <div class="mb-3">
+                <label for="clinical_summary" class="form-label">Clinical Summary <span class="text-danger">*</span></label>
+                <textarea id="clinical_summary" name="clinical_summary" rows="4" class="form-control" required 
+                          placeholder="Provide relevant clinical findings, history, and recommendations..."></textarea>
+            </div>
+            
+            <div id="recommendation-error" class="text-center mt-2" style="display: none;">
+                <small class="text-danger">Please complete all required fields before proceeding.</small>
+            </div>
+        </div>
+    </div>
 
 <form id="section-toggles" class="mb-4" method="post" action="{% url 'generate_pdf' patient_id=patient_id %}">
 
     {% csrf_token %}
-
-    <h1 class="text-center mb-4">Referral Report</h1>
 
     <div>
         <div id="loading-indicator" class="text-center p-4" style="display: none;">
@@ -62,107 +172,94 @@
         <p>ML Risk Assessment: {{ risk_prediction.error }}</p>
     {% endif %}
 
-    <div class="form-section mt-4">
-        <h4 class="text-center mb-4">Recommended Professional for Referral</h4>
-        <p class="text-center text-muted mb-3">Please select the type of health professional you recommend for this patient:</p>
-        
-        <!-- Display current recommendation if it exists -->
-        {% if current_recommendation %}
-            <div class="alert alert-success text-center mb-3">
-                <strong>Current Recommendation:</strong> {{ current_recommendation }}
-            </div>
-        {% else %}
-            <div class="alert alert-warning text-center mb-3">
-                <strong>No recommendation selected yet.</strong> Please select a professional below.
-            </div>
-        {% endif %}
-        
-        <fieldset class="btn-group-vertical d-flex flex-column align-items-center" aria-label="Recommended professional selection" style="border: none; padding: 0; gap: 10px;">
-            <legend class="visually-hidden">Select recommended professional</legend>
-            {% for prof_code, prof_name in recommended_professionals %}
-                <div class="btn-group" role="group">
-                    <input type="radio" class="btn-check" name="recommended_professional" id="prof_{{ prof_code }}" value="{{ prof_code }}" autocomplete="off" 
-                           {% if current_recommendation_code == prof_code %}checked{% elif not current_recommendation_code and forloop.first %}checked{% endif %} required>
-                    <label class="btn btn-outline-primary" for="prof_{{ prof_code }}" style="min-width: 200px;">{{ prof_name }}</label>
-                </div>
-            {% endfor %}
-        </fieldset>
-        
-        <div class="mt-3 text-center">
-            <small class="text-muted">This recommendation will be included in the report and email</small>
-        </div>
-        
-        <div id="recommendation-error" class="text-center mt-2" style="display: none;">
-            <small class="text-danger">Please select a professional recommendation before proceeding.</small>
-        </div>
-    </div>
-
 </form>
 
-<!-- Email Section -->
-<div class="email-section mt-4" style="background-color: #f8f9fa; padding: 20px; border-radius: 8px; border: 1px solid #dee2e6;">
-    <h4 class="text-center mb-4">Send Report via Email</h4>
-    
-    <form id="emailForm" method="post" action="{% url 'send_report_email' patient_id=patient_id %}">
-        {% csrf_token %}
+<!-- Additional Information -->
+<div class="card mb-3">
+    <div class="card-header bg-primary text-white">
+        <h5 class="mb-0">Additional Information</h5>
+    </div>
+    <div class="card-body">
+        <div class="mb-3">
+            <label for="patient_preferences" class="form-label fw-bold">Patient Preferences/Concerns:</label>
+            <textarea id="patient_preferences" name="patient_preferences" rows="3" class="form-control" 
+                      placeholder="Any patient or parent preferences, concerns, or special requirements"></textarea>
+        </div>
         
-        <div class="row">
-            <div class="col-md-6">
-                <div class="form-group mb-3">
-                    <label for="recipient_email" class="form-label">
-                        <strong>Recipient Email:</strong> <span class="text-danger">*</span>
-                    </label>
-                    <input type="email" id="recipient_email" name="recipient_email" required 
-                           class="form-control" placeholder="patient@example.com">
-                    <small class="form-text text-muted">Primary recipient of the report</small>
+        <div class="mb-3">
+            <label for="insurance_information" class="form-label fw-bold">Insurance Information:</label>
+            <textarea id="insurance_information" name="insurance_information" rows="2" class="form-control" 
+                      placeholder="Insurance details if applicable"></textarea>
+        </div>
+        
+        <div class="mb-3">
+            <label for="appointment_date" class="form-label fw-bold">Suggested Appointment Date:</label>
+            <input type="date" id="appointment_date" name="appointment_date" class="form-control">
+            <small class="form-text text-muted">Suggested appointment date (optional). Time will be selected at the booking page.</small>
+        </div>
+    </div>
+</div>
+
+<!-- Email Section -->
+<div class="card mb-3">
+    <div class="card-header bg-primary text-white">
+        <h5 class="mb-0">Send Report via Email</h5>
+    </div>
+    <div class="card-body">
+        <form id="emailForm" method="post" action="{% url 'send_report_email' patient_id=patient_id %}">
+            {% csrf_token %}
+            
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <label for="recipient_email" class="form-label">Recipient Email <span class="text-danger">*</span></label>
+                        <input type="email" id="recipient_email" name="recipient_email" required 
+                               class="form-control" placeholder="patient@example.com">
+                        <small class="form-text text-muted">Primary recipient of the report</small>
+                    </div>
+                </div>
+                
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <label for="cc_emails" class="form-label">CC (Health Professionals)</label>
+                        <input type="text" id="cc_emails" name="cc_emails" 
+                               class="form-control" placeholder="doctor1@clinic.com, doctor2@clinic.com">
+                        <small class="form-text text-muted">Comma-separated emails to CC (optional)</small>
+                    </div>
                 </div>
             </div>
             
-            <div class="col-md-6">
-                <div class="form-group mb-3">
-                    <label for="cc_emails" class="form-label">
-                        <strong>CC (Health Professionals):</strong>
-                    </label>
-                    <input type="text" id="cc_emails" name="cc_emails" 
-                           class="form-control" placeholder="doctor1@clinic.com, doctor2@clinic.com">
-                    <small class="form-text text-muted">Comma-separated emails to CC (optional)</small>
-                </div>
+            <div class="mb-3">
+                <label for="subject" class="form-label">Email Subject</label>
+                <input type="text" id="subject" name="subject" 
+                       class="form-control" 
+                       value="OralSmart Dental Report - Patient ID {{ patient_id }}"
+                       placeholder="Email subject line">
             </div>
-        </div>
+            
+            <div class="mb-3">
+                <label for="message" class="form-label">Additional Message</label>
+                <textarea id="message" name="message" rows="4" class="form-control" 
+                          placeholder="Optional message to include in the email..."></textarea>
+                <small class="form-text text-muted">This message will be included in the email body</small>
+            </div>
+            
+            <div class="d-flex justify-content-center">
+                <button type="submit" class="btn btn-primary btn-lg">
+                    <i class="bi bi-envelope"></i> Send Email
+                </button>
+            </div>
+        </form>
         
-        <div class="form-group mb-3">
-            <label for="subject" class="form-label">
-                <strong>Email Subject:</strong>
-            </label>
-            <input type="text" id="subject" name="subject" 
-                   class="form-control" 
-                   value="OralSmart Dental Report - Patient ID {{ patient_id }}"
-                   placeholder="Email subject line">
-        </div>
-        
-        <div class="form-group mb-3">
-            <label for="message" class="form-label">
-                <strong>Additional Message:</strong>
-            </label>
-            <textarea id="message" name="message" rows="4" class="form-control" 
-                      placeholder="Optional message to include in the email..."></textarea>
-            <small class="form-text text-muted">This message will be included in the email body</small>
-        </div>
-        
-        <div class="d-flex justify-content-center">
-            <button type="submit" class="btn btn-primary btn-lg">
-                <i class="bi bi-envelope"></i> Send Email
-            </button>
-        </div>
-    </form>
-    
-    <div id="email-status" class="mt-3" style="display: none;"></div>
+        <div id="email-status" class="mt-3" style="display: none;"></div>
+    </div>
 </div>
 
 
 <div class="form-section mt-3 d-flex justify-content-center">
     <button id="proceed-btn" class="btn btn-primary" type="button" onclick="validateAndProceed()">Proceed to Booking</button>
 </div>
+
 
 <script>
     document.addEventListener('DOMContentLoaded', function() {
@@ -185,8 +282,8 @@
             iframe.style.display = 'none';
             
             // Get the selected recommendation
-            const selectedRadio = document.querySelector('input[name="recommended_professional"]:checked');
-            const selectedText = selectedRadio ? selectedRadio.nextElementSibling.textContent : '';
+            const selectElement = document.querySelector('select[name="recommended_professional"]');
+            const selectedText = selectElement ? selectElement.options[selectElement.selectedIndex].text : '';
             
             fetch(this.action, {
                 method: "POST",
@@ -195,9 +292,6 @@
             }).then(function() {
                 //refresh the iframe to show the updated PDF
                 iframe.src = iframe.src.split('?')[0] + '?t=' + Date.now();
-                
-                // Update the recommendation display
-                updateRecommendationDisplay(selectedText);
                 
                 // Hide loading indicator and show iframe after a short delay
                 setTimeout(() => {
@@ -211,9 +305,21 @@
             });
         });
 
-        // Email form submission
+        // Email form submission with confirmation
         document.getElementById('emailForm').addEventListener('submit', function(e) {
             e.preventDefault();
+            
+            // Show confirmation dialog
+            const recipientEmail = document.getElementById('recipient_email').value;
+            const ccEmails = document.getElementById('cc_emails').value;
+            let confirmMessage = `Are you sure you want to send this report to ${recipientEmail}?`;
+            if (ccEmails) {
+                confirmMessage += `\n\nCC: ${ccEmails}`;
+            }
+            
+            if (!confirm(confirmMessage)) {
+                return;
+            }
             
             const formData = new FormData(this);
             const statusDiv = document.getElementById('email-status');
@@ -258,61 +364,121 @@
         });
 
         // Auto-submit form when recommendation changes
-        document.querySelectorAll('input[name="recommended_professional"]').forEach(function(radio) {
-            radio.addEventListener('change', function() {
-                if (this.checked) {
+        const selectElement = document.querySelector('select[name="recommended_professional"]');
+        if (selectElement) {
+            selectElement.addEventListener('change', function() {
+                if (this.value) {
                     document.getElementById('section-toggles').dispatchEvent(new Event('submit'));
                 }
             });
-        });
-
-        // Auto-submit form on page load if first option is checked but no current recommendation exists
-        const currentRecommendationCode = "{{ current_recommendation_code|escapejs }}";
-        const firstRadio = document.querySelector('input[name="recommended_professional"]');
-        
-        if (!currentRecommendationCode && firstRadio && firstRadio.checked) {
-            console.log('No current recommendation found, auto-submitting first selection');
-            // Update the display immediately
-            const firstRadioText = firstRadio.nextElementSibling.textContent;
-            updateRecommendationDisplay(firstRadioText);
-            
-            // Delay slightly to ensure the page is fully loaded
-            setTimeout(() => {
-                document.getElementById('section-toggles').dispatchEvent(new Event('submit'));
-            }, 500);
         }
     });
 
-    // Function to update the recommendation display
-    function updateRecommendationDisplay(selectedText) {
-        const alertContainer = document.querySelector('.form-section .alert');
-        if (alertContainer) {
-            if (selectedText) {
-                alertContainer.className = 'alert alert-success text-center mb-3';
-                alertContainer.innerHTML = '<strong>Current Recommendation:</strong> ' + selectedText;
-            } else {
-                alertContainer.className = 'alert alert-warning text-center mb-3';
-                alertContainer.innerHTML = '<strong>No recommendation selected yet.</strong> Please select a professional below.';
-            }
-        }
-    }
-
     // Validation function for proceed button
     function validateAndProceed() {
-        const selectedRecommendation = document.querySelector('input[name="recommended_professional"]:checked');
-        const errorDiv = document.getElementById('recommendation-error');
+        const selectElement = document.querySelector('select[name="recommended_professional"]');
+        const urgencyElement = document.querySelector('select[name="urgency"]');
+        const reasonElement = document.querySelector('textarea[name="reason"]');
+        const clinicalSummaryElement = document.querySelector('textarea[name="clinical_summary"]');
         
-        if (!selectedRecommendation) {
-            errorDiv.style.display = 'block';
-            // Scroll to the recommendation section
-            document.querySelector('.form-section').scrollIntoView({ behavior: 'smooth' });
+        // Check if all required fields are filled
+        const missingFields = [];
+        if (!selectElement || !selectElement.value) missingFields.push('Recommended Professional');
+        if (!urgencyElement || !urgencyElement.value) missingFields.push('Urgency Level');
+        if (!reasonElement || !reasonElement.value.trim()) missingFields.push('Reason for Referral');
+        if (!clinicalSummaryElement || !clinicalSummaryElement.value.trim()) missingFields.push('Clinical Summary');
+        
+        if (missingFields.length > 0) {
+            // Create and show Bootstrap alert
+            const alertDiv = document.createElement('div');
+            alertDiv.className = 'alert alert-warning alert-dismissible fade show position-fixed top-0 start-50 translate-middle-x mt-3';
+            alertDiv.style.zIndex = '9999';
+            alertDiv.style.minWidth = '400px';
+            alertDiv.innerHTML = `
+                <strong><i class="fas fa-exclamation-triangle"></i> Required Fields Missing</strong>
+                <p class="mb-1">Please complete the following fields:</p>
+                <ul class="mb-0 ps-3">
+                    ${missingFields.map(field => `<li>${field}</li>`).join('')}
+                </ul>
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            `;
+            document.body.appendChild(alertDiv);
+            
+            // Auto-dismiss after 7 seconds
+            setTimeout(function() {
+                const bsAlert = bootstrap.Alert.getOrCreateInstance(alertDiv);
+                bsAlert.close();
+            }, 7000);
+            
+            // Scroll to the referral details section
+            const referralDetailsCard = document.querySelector('select[name="recommended_professional"]').closest('.card');
+            if (referralDetailsCard) {
+                referralDetailsCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
             return false;
         }
         
-        errorDiv.style.display = 'none';
-        // Proceed to clinics page
-        window.location.href = "{% url 'clinics' %}?patient_id={{ patient_id }}";
+        // Collect all referral details
+        const formData = new FormData();
+        formData.append('patient_id', '{{ patient_id }}');
+        formData.append('recommended_professional', selectElement.value);
+        formData.append('urgency', urgencyElement.value);
+        formData.append('reason', reasonElement.value.trim());
+        formData.append('clinical_summary', clinicalSummaryElement.value.trim());
+        formData.append('patient_preferences', document.getElementById('patient_preferences')?.value || '');
+        formData.append('insurance_information', document.getElementById('insurance_information')?.value || '');
+        formData.append('appointment_date', document.getElementById('appointment_date')?.value || '');
+        formData.append('csrfmiddlewaretoken', document.querySelector('[name=csrfmiddlewaretoken]').value);
+        
+        // Save referral details to session/database
+        fetch("{% url 'save_referral_details' patient_id=patient_id %}", {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Proceed to clinics page
+                window.location.href = "{% url 'clinics' %}?patient_id={{ patient_id }}";
+            } else {
+                alert('Error saving referral details: ' + (data.error || 'Unknown error'));
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('An error occurred while saving referral details');
+        });
     }
+    
+    // Setup appointment date restrictions
+    document.addEventListener('DOMContentLoaded', function() {
+        const dateInput = document.getElementById('appointment_date');
+        
+        if (dateInput) {
+            // Set minimum date to tomorrow
+            const tomorrow = new Date();
+            tomorrow.setDate(tomorrow.getDate() + 1);
+            dateInput.min = tomorrow.toISOString().split('T')[0];
+            
+            // Set maximum date to 3 months from now
+            const maxDate = new Date();
+            maxDate.setMonth(maxDate.getMonth() + 3);
+            dateInput.max = maxDate.toISOString().split('T')[0];
+            
+            // Validate selected date
+            dateInput.addEventListener('change', function() {
+                const selectedDate = new Date(this.value);
+                const dayOfWeek = selectedDate.getDay();
+                
+                // Check if weekend
+                if (dayOfWeek === 0 || dayOfWeek === 6) {
+                    alert('Please select a weekday (Monday-Friday). Most dental practices are closed on weekends.');
+                    this.value = '';
+                    return;
+                }
+            });
+        }
+    });
 </script>
 
 {% endblock %}

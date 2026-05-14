@@ -17,13 +17,47 @@
         <div class="col-12">
             <div class="card shadow-sm">
                 <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
-                    <h3 class="mb-0"><i class="fas fa-history"></i> Patient History</h3>
-                    <a href="{% url 'create_patient' %}" class="btn btn-light btn-sm">
-                        <i class="fas fa-plus"></i> Add New Patient
-                    </a>
+                    <h3 class="mb-0"><i class="fas fa-exchange-alt"></i> Referrals</h3>
+                    <div>
+                        <a href="{% url 'create_patient' %}" class="btn btn-light btn-sm me-2">
+                            <i class="fas fa-plus"></i> Add Patient
+                        </a>
+                        <button type="button" class="btn btn-light btn-sm" data-bs-toggle="modal" data-bs-target="#selectPatientModal">
+                            <i class="fas fa-plus"></i> Create Referral
+                        </button>
+                    </div>
                 </div>
                 <div class="card-body">
-                    <!-- Search Bar -->
+                    <!-- Tabs -->
+                    <ul class="nav nav-tabs mb-3" role="tablist">
+                        <li class="nav-item">
+                            <a class="nav-link active" data-bs-toggle="tab" href="#patients" role="tab">
+                                <i class="fas fa-users"></i> Patients
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link position-relative" data-bs-toggle="tab" href="#received" role="tab">
+                                <i class="fas fa-inbox"></i> Received Referrals
+                                {% if received_referrals %}
+                                    <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" 
+                                          id="receivedReferralsBadge"
+                                          style="font-size: 0.7rem;">
+                                        {{ received_referrals|length }}
+                                    </span>
+                                {% endif %}
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" data-bs-toggle="tab" href="#sent" role="tab">
+                                <i class="fas fa-paper-plane"></i> Sent Referrals
+                            </a>
+                        </li>
+                    </ul>
+
+                    <div class="tab-content">
+                        <!-- Patients Tab -->
+                        <div id="patients" class="tab-pane fade show active" role="tabpanel">
+                            <!-- Search Bar -->
                     <div class="row mb-3">
                         <div class="col-md-8">
                             <form method="GET" action="{% url 'patient_list' %}" class="d-flex gap-2">
@@ -82,7 +116,7 @@
                                         <td>{{ patient.id }}</td>
                                         <td>{{ patient.name }} {{ patient.surname }}</td>
                                         <td>{{ patient.age }}</td>
-                                        <td>{{ patient.gender }}</td>
+                                        <td>{{ patient.get_gender_display }}</td>
                                         <td>{{ patient.parent_contact }}</td>
                                         <td>
                                             {% if patient.created_at %}
@@ -93,15 +127,25 @@
                                         </td>
                                         <td>
                                             <div class="btn-group btn-group-sm" role="group">
-                                                <a href="{% url 'dietary_screening' patient.id %}" class="btn btn-outline-success" title="Dietary Screening">
+                                                <a href="{% url 'dietary_screening' patient.id %}" 
+                                                   class="btn {% if patient.has_dietary_screening %}btn-outline-success{% else %}btn-success{% endif %}" 
+                                                   title="{% if patient.has_dietary_screening %}Update Dietary Screening{% else %}Complete Dietary Screening{% endif %}">
                                                     <i class="fas fa-utensils"></i>
                                                 </a>
-                                                <a href="{% url 'dental_screening' patient.id %}" class="btn btn-outline-info" title="Dental Screening">
+                                                <a href="{% url 'dental_screening' patient.id %}" 
+                                                   class="btn {% if patient.has_dental_screening %}btn-outline-info{% else %}btn-info{% endif %}" 
+                                                   title="{% if patient.has_dental_screening %}Update Dental Screening{% else %}Complete Dental Screening{% endif %}">
                                                     <i class="fas fa-tooth"></i>
                                                 </a>
-                                                <a href="{% url 'report' patient.id %}" class="btn btn-outline-primary" title="View Report">
-                                                    <i class="fas fa-file-alt"></i>
-                                                </a>
+                                                {% if patient.has_dental_screening or patient.has_dietary_screening %}
+                                                    <a href="{% url 'report' patient.id %}" class="btn btn-outline-primary" title="View Report">
+                                                        <i class="fas fa-file-alt"></i>
+                                                    </a>
+                                                {% else %}
+                                                    <button class="btn btn-outline-secondary" disabled title="Complete at least one screening first">
+                                                        <i class="fas fa-lock"></i>
+                                                    </button>
+                                                {% endif %}
                                             </div>
                                         </td>
                                     </tr>
@@ -172,14 +216,219 @@
                         {% endif %}
                     {% else %}
                         <div class="text-center py-5">
-                            <i class="fas fa-history fa-3x text-muted mb-3"></i>
-                            <h5>No patient history found</h5>
+                            <i class="fas fa-users fa-3x text-muted mb-3"></i>
+                            <h5>No patient records found</h5>
                             <p class="text-muted">You haven't created any patients yet. Start by adding your first patient.</p>
                             <a href="{% url 'create_patient' %}" class="btn btn-primary">
                                 <i class="fas fa-plus"></i> Create New Patient
                             </a>
                         </div>
                     {% endif %}
+                        </div>
+
+                        <!-- Received Referrals Tab -->
+                        <div id="received" class="tab-pane fade" role="tabpanel">
+                            {% if received_referrals %}
+                                <div class="table-responsive">
+                                    <table class="table table-hover align-middle">
+                                        <thead class="table-light">
+                                            <tr>
+                                                <th class="text-center">Referral #</th>
+                                                <th>Patient</th>
+                                                <th>From</th>
+                                                <th class="text-center">Urgency</th>
+                                                <th class="text-center">Status</th>
+                                                <th class="text-center">Received</th>
+                                                <th class="text-center">Actions</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {% for referral in received_referrals %}
+                                            <tr style="{% if referral.status == 'sent' %}border-left: 4px solid {% if referral.urgency == 'emergency' %}#dc3545{% elif referral.urgency == 'urgent' %}#ffc107{% else %}#0dcaf0{% endif %};{% endif %}">
+                                                <td class="text-center">
+                                                    <strong class="text-primary">{{ referral.referral_number }}</strong>
+                                                    {% if referral.status == 'sent' %}
+                                                        <br><span class="badge bg-info mt-1" style="font-size: 0.7rem;">NEW</span>
+                                                    {% endif %}
+                                                </td>
+                                                <td>
+                                                    <div class="d-flex align-items-center">
+                                                        <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center me-2"
+                                                             style="width: 35px; height: 35px; font-size: 14px;">
+                                                            {{ referral.patient.name|slice:":1" }}{{ referral.patient.surname|slice:":1" }}
+                                                        </div>
+                                                        <div>
+                                                            <strong>{{ referral.patient.name }} {{ referral.patient.surname }}</strong>
+                                                            {% if referral.status == 'sent' %}
+                                                                <i class="fas fa-circle text-primary ms-1" style="font-size: 0.5rem;" title="Unread"></i>
+                                                            {% endif %}
+                                                        </div>
+                                                    </div>
+                                                </td>
+                                                <td>
+                                                    <div>
+                                                        <div class="text-muted small">{{ referral.referring_facility.name|default:"Unknown Facility" }}</div>
+                                                        <div class="fw-medium">{{ referral.referring_user.get_full_name|default:referral.referring_user.username }}</div>
+                                                    </div>
+                                                </td>
+                                                <td class="text-center">
+                                                    <span class="badge bg-{% if referral.urgency == 'emergency' %}danger{% elif referral.urgency == 'urgent' %}warning text-dark{% else %}secondary{% endif %} px-3 py-2">
+                                                        {% if referral.urgency == 'emergency' %}
+                                                            <i class="fas fa-bolt me-1"></i>
+                                                        {% elif referral.urgency == 'urgent' %}
+                                                            <i class="fas fa-exclamation me-1"></i>
+                                                        {% endif %}
+                                                        {{ referral.get_urgency_display }}
+                                                    </span>
+                                                </td>
+                                                <td class="text-center">
+                                                    <span class="badge bg-{% if referral.status == 'sent' %}danger{% elif referral.status == 'completed' %}success{% elif referral.status == 'cancelled' %}danger{% elif referral.status == 'in_progress' %}primary{% elif referral.status == 'appointment_scheduled' %}info{% else %}warning{% endif %} px-3 py-2">
+                                                        {{ referral.get_status_display }}
+                                                    </span>
+                                                </td>
+                                                <td class="text-center">
+                                                    {% if referral.sent_at %}
+                                                        <div>{{ referral.sent_at|date:"M d, Y" }}</div>
+                                                        <small class="text-muted">{{ referral.sent_at|timesince }} ago</small>
+                                                    {% else %}
+                                                        <span class="text-muted">N/A</span>
+                                                    {% endif %}
+                                                </td>
+                                                <td class="text-center">
+                                                    <div class="btn-group" role="group">
+                                                        <a href="{% url 'referrals:detail' referral.pk %}" 
+                                                           class="btn btn-sm {% if referral.status == 'sent' %}btn-primary{% else %}btn-outline-primary{% endif %}" 
+                                                           title="View Details">
+                                                            <i class="fas fa-eye"></i> View
+                                                        </a>
+                                                        <a href="{% url 'referral_pdf' referral.pk %}" 
+                                                           class="btn btn-sm btn-outline-secondary" 
+                                                           title="Download PDF Report">
+                                                            <i class="fas fa-file-pdf"></i>
+                                                        </a>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                            {% endfor %}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            {% else %}
+                                <div class="text-center py-5">
+                                    <i class="fas fa-inbox fa-3x text-muted mb-3"></i>
+                                    <h5 class="text-muted">No Received Referrals</h5>
+                                    <p class="text-muted">You haven't received any referrals yet.</p>
+                                </div>
+                            {% endif %}
+                        </div>
+
+                        <!-- Sent Referrals Tab -->
+                        <div id="sent" class="tab-pane fade" role="tabpanel">
+                            {% if sent_referrals %}
+                                <div class="table-responsive">
+                                    <table class="table table-hover align-middle">
+                                        <thead class="table-light">
+                                            <tr>
+                                                <th class="text-center">Referral #</th>
+                                                <th>Patient</th>
+                                                <th>Referred To</th>
+                                                <th class="text-center">Urgency</th>
+                                                <th class="text-center">Status</th>
+                                                <th class="text-center">Created</th>
+                                                <th class="text-center">Actions</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {% for referral in sent_referrals %}
+                                            <tr>
+                                                <td class="text-center">
+                                                    <strong class="text-primary">{{ referral.referral_number }}</strong>
+                                                </td>
+                                                <td>
+                                                    <div class="d-flex align-items-center">
+                                                        <div class="rounded-circle bg-secondary text-white d-flex align-items-center justify-content-center me-2"
+                                                             style="width: 35px; height: 35px; font-size: 14px;">
+                                                            {{ referral.patient.name|slice:":1" }}{{ referral.patient.surname|slice:":1" }}
+                                                        </div>
+                                                        <div>
+                                                            <strong>{{ referral.patient.name }} {{ referral.patient.surname }}</strong>
+                                                        </div>
+                                                    </div>
+                                                </td>
+                                                <td>
+                                                    <div>
+                                                        {% if referral.receiving_practitioner %}
+                                                            <div class="fw-medium">
+                                                                <i class="fas fa-user-md text-primary me-1"></i>
+                                                                {{ referral.receiving_practitioner.get_full_name|default:referral.receiving_practitioner.username }}
+                                                            </div>
+                                                            {% if referral.receiving_practitioner.profile.specialization %}
+                                                                <small class="text-muted">{{ referral.receiving_practitioner.profile.specialization }}</small>
+                                                            {% endif %}
+                                                        {% elif referral.receiving_facility %}
+                                                            <div class="fw-medium">
+                                                                <i class="fas fa-hospital text-info me-1"></i>
+                                                                {{ referral.receiving_facility.name }}
+                                                            </div>
+                                                        {% else %}
+                                                            <span class="text-muted">Not specified</span>
+                                                        {% endif %}
+                                                    </div>
+                                                </td>
+                                                <td class="text-center">
+                                                    <span class="badge bg-{% if referral.urgency == 'emergency' %}danger{% elif referral.urgency == 'urgent' %}warning text-dark{% else %}secondary{% endif %} px-3 py-2">
+                                                        {% if referral.urgency == 'emergency' %}
+                                                            <i class="fas fa-bolt me-1"></i>
+                                                        {% elif referral.urgency == 'urgent' %}
+                                                            <i class="fas fa-exclamation me-1"></i>
+                                                        {% endif %}
+                                                        {{ referral.get_urgency_display }}
+                                                    </span>
+                                                </td>
+                                                <td class="text-center">
+                                                    <span class="badge bg-{% if referral.status == 'completed' %}success{% elif referral.status == 'cancelled' %}danger{% elif referral.status == 'acknowledged' %}info{% elif referral.status == 'in_progress' %}primary{% elif referral.status == 'appointment_scheduled' %}info{% else %}warning{% endif %} px-3 py-2">
+                                                        {{ referral.get_status_display }}
+                                                    </span>
+                                                </td>
+                                                <td class="text-center">
+                                                    {% if referral.created_at %}
+                                                        <div>{{ referral.created_at|date:"M d, Y" }}</div>
+                                                        <small class="text-muted">{{ referral.created_at|timesince }} ago</small>
+                                                    {% else %}
+                                                        <span class="text-muted">N/A</span>
+                                                    {% endif %}
+                                                </td>
+                                                <td class="text-center">
+                                                    <div class="btn-group" role="group">
+                                                        <a href="{% url 'referrals:detail' referral.pk %}" 
+                                                           class="btn btn-sm btn-outline-primary" 
+                                                           title="View Details">
+                                                            <i class="fas fa-eye"></i> View
+                                                        </a>
+                                                        <a href="{% url 'referral_pdf' referral.pk %}" 
+                                                           class="btn btn-sm btn-outline-secondary" 
+                                                           title="Download PDF Report">
+                                                            <i class="fas fa-file-pdf"></i>
+                                                        </a>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                            {% endfor %}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            {% else %}
+                                <div class="text-center py-5">
+                                    <i class="fas fa-paper-plane fa-3x text-muted mb-3"></i>
+                                    <h5 class="text-muted">No Sent Referrals</h5>
+                                    <p class="text-muted">You haven't sent any referrals yet. Start by creating your first referral.</p>
+                                    <button type="button" class="btn btn-primary mt-2" data-bs-toggle="modal" data-bs-target="#selectPatientModal">
+                                        <i class="fas fa-plus"></i> Create Referral
+                                    </button>
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -268,6 +517,212 @@ document.addEventListener('DOMContentLoaded', function() {
     // Initialize clear button visibility
     clearButton.style.display = 'none';
 });
+
+// Initialize Bootstrap tabs for referrals
+document.addEventListener('DOMContentLoaded', function() {
+    var triggerTabList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tab"]'));
+    triggerTabList.forEach(function (triggerEl) {
+        var tabTrigger = new bootstrap.Tab(triggerEl);
+        
+        triggerEl.addEventListener('click', function (event) {
+            event.preventDefault();
+            tabTrigger.show();
+        });
+    });
+    
+    // Modal patient search functionality with debouncing for performance
+    const modalSearchInput = document.getElementById('modalSearchInput');
+    const modalSearchButton = document.getElementById('modalSearchButton');
+    const modalClearButton = document.getElementById('modalClearButton');
+    const patientTableBody = document.getElementById('modalPatientTableBody');
+    const noResultsMessage = document.getElementById('noResultsMessage');
+    const modalPatientCount = document.getElementById('modalPatientCount');
+    const emptyState = document.getElementById('emptyState');
+    
+    if (modalSearchInput && patientTableBody) {
+        let searchTimeout;
+        
+        // Search functionality with debounce
+        function filterPatients() {
+            const searchTerm = modalSearchInput.value.toLowerCase().trim();
+            const rows = patientTableBody.querySelectorAll('tr[data-patient-id]');
+            let visibleCount = 0;
+            
+            // Use DocumentFragment for better performance
+            rows.forEach(row => {
+                const patientName = row.getAttribute('data-patient-name').toLowerCase();
+                const patientId = row.getAttribute('data-patient-id');
+                
+                if (searchTerm === '' || 
+                    patientName.includes(searchTerm) || 
+                    patientId.includes(searchTerm)) {
+                    row.style.display = '';
+                    visibleCount++;
+                } else {
+                    row.style.display = 'none';
+                }
+            });
+            
+            // Update count
+            if (modalPatientCount) {
+                modalPatientCount.textContent = visibleCount;
+            }
+            
+            // Show/hide no results message
+            if (noResultsMessage) {
+                const hasEmptyState = emptyState && rows.length === 0;
+                noResultsMessage.style.display = (visibleCount === 0 && !hasEmptyState) ? 'block' : 'none';
+            }
+            
+            // Show/hide clear button
+            if (modalClearButton) {
+                modalClearButton.style.display = searchTerm === '' ? 'none' : 'inline-block';
+            }
+        }
+        
+        // Debounced search on input
+        modalSearchInput.addEventListener('input', function() {
+            clearTimeout(searchTimeout);
+            searchTimeout = setTimeout(filterPatients, 200);
+        });
+        
+        // Immediate search on button click
+        if (modalSearchButton) {
+            modalSearchButton.addEventListener('click', function() {
+                clearTimeout(searchTimeout);
+                filterPatients();
+            });
+        }
+        
+        // Clear search
+        if (modalClearButton) {
+            modalClearButton.addEventListener('click', function() {
+                modalSearchInput.value = '';
+                clearTimeout(searchTimeout);
+                filterPatients();
+                modalSearchInput.focus();
+            });
+        }
+        
+        // Search on Enter key
+        modalSearchInput.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                clearTimeout(searchTimeout);
+                filterPatients();
+            }
+        });
+    }
+});
 </script>
+
+<!-- Patient Selection Modal - Select Patient for Referral -->
+<div class="modal fade" id="selectPatientModal" tabindex="-1" aria-labelledby="selectPatientModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title" id="selectPatientModalLabel">
+                    <i class="fas fa-user-check"></i> Select Patient for Referral
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <!-- Search Bar -->
+                <div class="mb-3">
+                    <div class="input-group">
+                        <span class="input-group-text"><i class="fas fa-search"></i></span>
+                        <input type="text" class="form-control" id="modalSearchInput" placeholder="Search by name, ID, or contact...">
+                        <button class="btn btn-outline-secondary" type="button" id="modalClearButton" style="display: none;">
+                            <i class="fas fa-times"></i>
+                        </button>
+                        <button class="btn btn-primary" type="button" id="modalSearchButton">
+                            <i class="fas fa-search"></i>
+                        </button>
+                    </div>
+                    <small class="form-text text-muted">Patients without completed screenings cannot be referred</small>
+                </div>
+                
+                <!-- Patient Count Info -->
+                <div class="mb-2 text-muted small">
+                    <span id="modalPatientCount">{{ eligible_patients|length }}</span> patient(s) available
+                    {% if eligible_patients|length >= 50 %}
+                        <span class="text-info">(showing most recent 50, use search to find more)</span>
+                    {% endif %}
+                </div>
+                
+                <!-- Patient List -->
+                <div class="table-responsive" style="max-height: 400px; overflow-y: auto;">
+                    <table class="table table-hover table-sm">
+                        <thead class="sticky-top bg-light">
+                            <tr>
+                                <th>ID</th>
+                                <th>Name</th>
+                                <th>Age</th>
+                                <th>Screenings</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="modalPatientTableBody">
+                            {% for patient in eligible_patients %}
+                            <tr data-patient-id="{{ patient.id }}" data-patient-name="{{ patient.name }} {{ patient.surname }}">
+                                <td>{{ patient.id }}</td>
+                                <td>{{ patient.name }} {{ patient.surname }}</td>
+                                <td>{{ patient.age }}</td>
+                                <td>
+                                    {% if patient.has_dental_screening %}
+                                        <span class="badge bg-info text-white me-1" title="Dental screening completed">
+                                            <i class="fas fa-tooth"></i> Dental
+                                        </span>
+                                    {% else %}
+                                        <span class="badge bg-secondary text-white me-1" title="Dental screening not completed">
+                                            <i class="fas fa-tooth"></i> <s>Dental</s>
+                                        </span>
+                                    {% endif %}
+                                    {% if patient.has_dietary_screening %}
+                                        <span class="badge bg-success" title="Dietary screening completed">
+                                            <i class="fas fa-utensils"></i> Dietary
+                                        </span>
+                                    {% else %}
+                                        <span class="badge bg-secondary text-white" title="Dietary screening not completed">
+                                            <i class="fas fa-utensils"></i> <s>Dietary</s>
+                                        </span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if patient.has_dental_screening or patient.has_dietary_screening %}
+                                        <a href="{% url 'report' patient.id %}" class="btn btn-primary btn-sm">
+                                            Continue <i class="fas fa-arrow-right"></i>
+                                        </a>
+                                    {% else %}
+                                        <button class="btn btn-secondary btn-sm" disabled title="Complete at least one screening first">
+                                            <i class="fas fa-lock"></i> No Screenings
+                                        </button>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr id="emptyState">
+                                <td colspan="5" class="text-center py-4">
+                                    <i class="fas fa-exclamation-circle fa-2x text-muted mb-2"></i>
+                                    <p class="text-muted mb-1">No patients found.</p>
+                                    <small class="text-muted">Create a patient first to send referrals.</small>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                    <div id="noResultsMessage" style="display: none;" class="text-center py-4">
+                        <i class="fas fa-search fa-2x text-muted mb-2"></i>
+                        <p class="text-muted mb-1">No patients match your search criteria.</p>
+                        <small class="text-muted">Try a different search term</small>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+            </div>
+        </div>
+    </div>
+</div>
 
 {% endblock %}

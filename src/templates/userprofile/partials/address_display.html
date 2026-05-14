@@ -1,0 +1,23 @@
+<!-- Address Display Partial -->
+<div class="row" id="address-section">
+    <div class="col-sm-3">
+        <p class="mb-0">Address</p>
+    </div>
+    <div class="col-sm-9">
+        <div class="d-flex justify-content-between align-items-center">
+            <p class="text-muted mb-0">{{ address|default:'No address provided' }}</p>
+            <button class="btn btn-sm btn-outline-primary" 
+                    hx-get="{% url 'edit_address' %}" 
+                    hx-target="#address-section" 
+                    hx-swap="outerHTML"
+                    title="Edit address">
+                <i class="fas fa-edit"></i> Edit
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Update left panel address as well -->
+<script>
+    document.getElementById('left-panel-address').textContent = '{{ address|default:"No address provided" }}';
+</script>

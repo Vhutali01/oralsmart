@@ -1,0 +1,153 @@
+{% extends 'base.html' %}
+
+{% block navbar %}
+    {% include "navbar2.html" %}
+{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <!-- Back button -->
+    <div class="mb-3">
+        <a href="{% url 'patient_list' %}" class="btn btn-outline-primary">
+            <i class="fas fa-arrow-left"></i> Back
+        </a>
+    </div>
+
+    <div class="row">
+        <div class="col-12">
+            <div class="card shadow-sm">
+                <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                    <h3 class="mb-0"><i class="fas fa-bell"></i> Notifications</h3>
+                    <button class="btn btn-light btn-sm" onclick="markAllAsRead()">
+                        <i class="fas fa-check-double"></i> Mark All as Read
+                    </button>
+                </div>
+                <div class="card-body">
+                    <!-- Filter Options -->
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="showRead" 
+                                       {% if show_read %}checked{% endif %}
+                                       onchange="toggleShowRead()">
+                                <label class="form-check-label" for="showRead">
+                                    Show read notifications
+                                </label>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <select class="form-select form-select-sm" id="filterType" onchange="filterByType()">
+                                <option value="">All Types</option>
+                                {% for type_value, type_label in notification_types %}
+                                    <option value="{{ type_value }}" {% if filter_type == type_value %}selected{% endif %}>
+                                        {{ type_label }}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Notifications List -->
+                    {% if notifications %}
+                        <div class="list-group">
+                            {% for notification in notifications %}
+                            <a href="{{ notification.action_url }}" 
+                               class="list-group-item list-group-item-action {% if not notification.is_read %}fw-bold bg-light{% endif %}"
+                               style="border-left: 4px solid var(--bs-{{ notification.get_urgency_class }});"
+                               onclick="markAsRead({{ notification.id }})">
+                                <div class="d-flex w-100 justify-content-between align-items-start">
+                                    <div class="flex-grow-1">
+                                        <div class="d-flex align-items-center mb-1">
+                                            <i class="fas {{ notification.get_icon }} text-{{ notification.get_urgency_class }} me-2"></i>
+                                            <h6 class="mb-0">{{ notification.title }}</h6>
+                                            {% if not notification.is_read %}
+                                                <span class="badge bg-primary ms-2" style="font-size: 0.65rem;">NEW</span>
+                                            {% endif %}
+                                        </div>
+                                        <p class="mb-1 text-muted">{{ notification.message }}</p>
+                                        <small class="text-muted">
+                                            <i class="far fa-clock"></i> {{ notification.created_at|timesince }} ago
+                                            {% if notification.is_read %}
+                                                • <i class="fas fa-check"></i> Read {{ notification.read_at|timesince }} ago
+                                            {% endif %}
+                                        </small>
+                                    </div>
+                                    <span class="badge bg-{{ notification.get_urgency_class }}">
+                                        {{ notification.get_notification_type_display }}
+                                    </span>
+                                </div>
+                            </a>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <div class="text-center py-5">
+                            <i class="fas fa-check-circle fa-3x text-success mb-3"></i>
+                            <h5>No notifications</h5>
+                            <p class="text-muted">
+                                {% if not show_read %}
+                                    You're all caught up! No unread notifications.
+                                {% else %}
+                                    You don't have any notifications yet.
+                                {% endif %}
+                            </p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function toggleShowRead() {
+    const showRead = document.getElementById('showRead').checked;
+    const filterType = document.getElementById('filterType').value;
+    window.location.href = `?show_read=${showRead}&type=${filterType}`;
+}
+
+function filterByType() {
+    const showRead = document.getElementById('showRead').checked;
+    const filterType = document.getElementById('filterType').value;
+    window.location.href = `?show_read=${showRead}&type=${filterType}`;
+}
+
+function markAsRead(notificationId) {
+    fetch(`/notifications/api/${notificationId}/read/`, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': getCookie('csrftoken'),
+            'Content-Type': 'application/json'
+        }
+    });
+}
+
+function markAllAsRead() {
+    fetch('/notifications/api/mark-all-read/', {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': getCookie('csrftoken'),
+            'Content-Type': 'application/json'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        window.location.reload();
+    });
+}
+
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+</script>
+{% endblock %}

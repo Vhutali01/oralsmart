@@ -17,11 +17,12 @@ from django.contrib import admin
 from django.urls import path, include
 from patient.views import create_patient, patient_list_view
 from userauth.views import login_user, logout_user,register_user, home_view, landing
-from userprofile.views import profile_view, get_professions
+from userprofile.views import profile_view, get_professions, edit_name, edit_contact, edit_profession, edit_email, edit_phone, edit_address, get_practitioners, toggle_referral_acceptance, update_availability, edit_clinic
 from assessments.views import dental_screening, dietary_screening
-from reports.views import generate_pdf, view_report, send_report_email 
+from reports.views import generate_pdf, view_report, send_report_email, save_referral_details
 from userauth.views import activate, change_password, req_password_reset, confirm_password_reset
-from facility.views import clinic_list, refer_patient
+from facility.views import clinic_list, refer_patient, refer_to_practitioner, get_working_hours_api
+from referrals.views import generate_referral_pdf
 from django.conf import settings
 from django.conf.urls.static import static
 
@@ -47,6 +48,20 @@ urlpatterns = [
     #for profile
     path('profile_view/', profile_view, name='profile'),
     path('ajax/get_professions/', get_professions, name='get_professions'), #gets professions for authority body dynamically
+    
+    # HTMX profile editing endpoints
+    path('profile/edit/name/', edit_name, name='edit_name'),
+    path('profile/edit/contact/', edit_contact, name='edit_contact'),
+    path('profile/edit/profession/', edit_profession, name='edit_profession'),
+    path('profile/edit/email/', edit_email, name='edit_email'),
+    path('profile/edit/phone/', edit_phone, name='edit_phone'),
+    path('profile/edit/address/', edit_address, name='edit_address'),
+    path('profile/edit/clinic/', edit_clinic, name='edit_clinic'),
+    
+    # Practitioner API endpoints
+    path('api/practitioners/', get_practitioners, name='get_practitioners'),
+    path('api/practitioners/toggle-acceptance/', toggle_referral_acceptance, name='toggle_referral_acceptance'),
+    path('api/practitioners/update-availability/', update_availability, name='update_availability'),
 
     #for screening assessments
     path('assessments/dietary_screening/<int:patient_id>/', dietary_screening, name='dietary_screening'),
@@ -56,6 +71,7 @@ urlpatterns = [
     path('reports/report/<int:patient_id>/', view_report, name='report'),
     path('reports/<int:patient_id>/', generate_pdf, name='generate_pdf'),
     path('reports/send-email/<int:patient_id>/', send_report_email, name='send_report_email'),
+    path('reports/save-referral/<int:patient_id>/', save_referral_details, name='save_referral_details'),
 
     #for activating account
     path('activate/<uidb64>/<token>/', activate, name='activate'),
@@ -68,6 +84,15 @@ urlpatterns = [
     #for clinics
     path('clinics/', clinic_list, name='clinics'),
     path('clinics/refer/<int:clinic_id>/', refer_patient, name='refer_patient'),
+    path('clinics/refer-practitioner/', refer_to_practitioner, name='refer_to_practitioner'),
+    path('api/working-hours/', get_working_hours_api, name='working_hours_api'),
+
+    #for referrals
+    path('referrals/', include('referrals.urls')),
+    path('referral/<int:pk>/pdf/', generate_referral_pdf, name='referral_pdf'),
+
+    #for notifications
+    path('notifications/', include('notifications.urls')),
 
     #for ML models
     path('ml/', include('ml_models.urls')),
